@@ -1,0 +1,126 @@
+# Requirements: TrenchWars
+
+**Defined:** 2026-03-22
+**Core Value:** Two or more players can connect to a persistent arena and engage in real-time space combat with responsive controls that capture the feel of SubSpace/Continuum.
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### Ship Physics
+
+- [ ] **PHYS-01**: Ship rotates left/right with arrow keys at configurable rotation speed
+- [ ] **PHYS-02**: Ship thrusts forward with up arrow, applying force in facing direction
+- [ ] **PHYS-03**: Ship maintains momentum and drifts when not thrusting (inertia)
+- [ ] **PHYS-04**: Ship has configurable drag that gradually slows it over time
+- [ ] **PHYS-05**: Ship bounces off tile walls on collision
+- [ ] **PHYS-06**: Physics parameters match authentic SubSpace feel (rotation speed, thrust, drag coefficients)
+- [ ] **PHYS-07**: Ship can activate afterburner for temporary speed boost consuming energy
+
+### Combat
+
+- [ ] **CMBT-01**: Player can fire bullets with spacebar that travel in ship's facing direction
+- [ ] **CMBT-02**: Bullets have travel time and speed (not hitscan)
+- [ ] **CMBT-03**: Bullets damage other players on hit and are destroyed
+- [ ] **CMBT-04**: Player can fire bombs that bounce off walls
+- [ ] **CMBT-05**: Bombs deal area damage on impact with a player or after timeout
+- [ ] **CMBT-06**: Player dies when health reaches zero
+- [ ] **CMBT-07**: Kill and death counts are tracked per player
+- [ ] **CMBT-08**: Player respawns at a random safe location after death
+- [ ] **CMBT-09**: Server performs lag-compensated hit detection for fair combat
+
+### Ships
+
+- [ ] **SHIP-01**: Warbird is available — fast, agile fighter with standard bullets
+- [ ] **SHIP-02**: Javelin is available — slower, powerful bombs, higher damage
+- [ ] **SHIP-03**: Spider is available — medium speed, mines-ready platform (bombs for v1)
+- [ ] **SHIP-04**: Each ship type has distinct stats (speed, rotation, health, energy, fire rate)
+- [ ] **SHIP-05**: Player can select ship type before entering the arena
+
+### Networking
+
+- [ ] **NETW-01**: Authoritative server validates all game state (positions, hits, damage)
+- [ ] **NETW-02**: Client-side prediction provides responsive local controls despite latency
+- [ ] **NETW-03**: Server reconciliation corrects client predictions when they diverge
+- [ ] **NETW-04**: Entity interpolation renders remote players smoothly between server updates
+- [ ] **NETW-05**: Player can reconnect to an active session after disconnect
+
+### Game Modes
+
+- [ ] **MODE-01**: Free-for-all deathmatch: all players fight, kills tracked on scoreboard
+- [ ] **MODE-02**: Team arena: 2 teams compete in elimination rounds
+- [ ] **MODE-03**: Players can spectate an active arena without participating
+
+### Maps
+
+- [ ] **MAPS-01**: Tile-based map system with walls and open space
+- [ ] **MAPS-02**: At least one playable arena map designed for 10-20 players
+- [ ] **MAPS-03**: Map data loads from a defined format (tilemap)
+
+### UI & Experience
+
+- [ ] **UIEX-01**: Ship selection screen where player picks ship type
+- [ ] **UIEX-02**: In-game HUD showing health, energy, and kill/death count
+- [ ] **UIEX-03**: Scoreboard/leaderboard visible during gameplay
+- [ ] **UIEX-04**: Minimap/radar showing player positions on the map
+- [ ] **UIEX-05**: Text chat between players in the same arena
+- [ ] **UIEX-06**: Audio effects for engine thrust, weapon fire, and explosions
+- [ ] **UIEX-07**: Modern 2D visual style with vector graphics and glow/neon effects
+- [ ] **UIEX-08**: No account or registration required to start playing
+
+### Infrastructure
+
+- [ ] **INFR-01**: Game server hosted publicly and accessible via browser
+- [ ] **INFR-02**: Server supports 20+ concurrent players at 60fps simulation
+- [ ] **INFR-03**: Multiple arena rooms can run simultaneously
+
+## v2 Requirements
+
+### Extended Combat
+
+- **XCBT-01**: Mines — place stationary explosive traps on the map
+- **XCBT-02**: Special weapons — repel, burst, decoy abilities
+- **XCBT-03**: Powerup pickups (greens) spawning randomly on the map
+- **XCBT-04**: Additional ship types (Leviathan, Terrier, Weasel, Lancaster, Shark)
+
+### Game Modes
+
+- **XMOD-01**: Flag/base capture game mode
+- **XMOD-02**: Custom game settings per arena (ship restrictions, score limits)
+
+### Map Editor
+
+- **XMAP-01**: In-browser map editor to create custom arenas
+- **XMAP-02**: Share and load community-created maps
+
+### Accounts & Progression
+
+- **XACC-01**: Player accounts with persistent stats
+- **XACC-02**: Leaderboards across sessions
+- **XACC-03**: Player profiles with match history
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Desktop client (Electron) | Browser-only for maximum accessibility |
+| Matchmaking system | Persistent arena model, players join directly |
+| Mobile support | Desktop browser focus, controls require keyboard |
+| 3D graphics | 2D top-down is core to the SubSpace identity |
+| Voice chat | Text chat sufficient for v1, complexity not justified |
+| Modding/scripting API | Focus on core game, modding is v3+ territory |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| *(populated during roadmap creation)* | | |
+
+**Coverage:**
+- v1 requirements: 33 total
+- Mapped to phases: 0
+- Unmapped: 33
+
+---
+*Requirements defined: 2026-03-22*
+*Last updated: 2026-03-22 after initial definition*
