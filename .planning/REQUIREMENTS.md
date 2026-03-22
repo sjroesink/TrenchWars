@@ -114,13 +114,55 @@ Requirements for initial release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(populated during roadmap creation)* | | |
+| PHYS-01 | Phase 1 | Pending |
+| PHYS-02 | Phase 1 | Pending |
+| PHYS-03 | Phase 1 | Pending |
+| PHYS-04 | Phase 1 | Pending |
+| PHYS-05 | Phase 1 | Pending |
+| PHYS-06 | Phase 1 | Pending |
+| PHYS-07 | Phase 1 | Pending |
+| MAPS-01 | Phase 1 | Pending |
+| MAPS-02 | Phase 1 | Pending |
+| MAPS-03 | Phase 1 | Pending |
+| NETW-01 | Phase 2 | Pending |
+| NETW-02 | Phase 2 | Pending |
+| NETW-03 | Phase 2 | Pending |
+| NETW-04 | Phase 2 | Pending |
+| NETW-05 | Phase 2 | Pending |
+| CMBT-01 | Phase 2 | Pending |
+| CMBT-02 | Phase 2 | Pending |
+| CMBT-03 | Phase 2 | Pending |
+| CMBT-04 | Phase 2 | Pending |
+| CMBT-05 | Phase 2 | Pending |
+| CMBT-06 | Phase 2 | Pending |
+| CMBT-07 | Phase 2 | Pending |
+| CMBT-08 | Phase 2 | Pending |
+| CMBT-09 | Phase 2 | Pending |
+| SHIP-01 | Phase 2 | Pending |
+| SHIP-02 | Phase 2 | Pending |
+| SHIP-03 | Phase 2 | Pending |
+| SHIP-04 | Phase 2 | Pending |
+| SHIP-05 | Phase 2 | Pending |
+| MODE-01 | Phase 3 | Pending |
+| MODE-02 | Phase 3 | Pending |
+| MODE-03 | Phase 3 | Pending |
+| UIEX-01 | Phase 3 | Pending |
+| UIEX-02 | Phase 3 | Pending |
+| UIEX-03 | Phase 3 | Pending |
+| UIEX-04 | Phase 3 | Pending |
+| UIEX-05 | Phase 3 | Pending |
+| UIEX-06 | Phase 3 | Pending |
+| UIEX-07 | Phase 3 | Pending |
+| UIEX-08 | Phase 3 | Pending |
+| INFR-01 | Phase 4 | Pending |
+| INFR-02 | Phase 4 | Pending |
+| INFR-03 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33
+- v1 requirements: 43 total
+- Mapped to phases: 43
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*
