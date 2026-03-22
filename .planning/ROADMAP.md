@@ -29,12 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A complete arena map with walls and open corridors is loaded and rendered in the browser
   4. Ship movement feels authentically like SubSpace (rotation speed, thrust, drag all match the original game's character)
   5. Afterburner activates on keypress, visibly boosting speed and draining energy
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md -- Scaffold monorepo, define types/constants/ship configs, set up test and dev infrastructure
+- [ ] 01-02-PLAN.md -- Implement physics engine, wall collision, and map system with TDD
+- [ ] 01-03-PLAN.md -- Wire client rendering, input, game loop, and debug tools for playable sandbox
 
 ### Phase 2: Multiplayer Combat
 **Goal**: Multiple players can connect to the same arena and fight each other in real-time with responsive controls and fair hit detection
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Ship Physics and Arena | 0/3 | Not started | - |
+| 1. Ship Physics and Arena | 0/3 | Planning complete | - |
 | 2. Multiplayer Combat | 0/3 | Not started | - |
 | 3. Game Experience | 0/3 | Not started | - |
 | 4. Production Launch | 0/1 | Not started | - |
