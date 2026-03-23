@@ -64,8 +64,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **UIEX-03**: Scoreboard/leaderboard visible during gameplay
 - [ ] **UIEX-04**: Minimap/radar showing player positions on the map
 - [ ] **UIEX-05**: Text chat between players in the same arena
-- [ ] **UIEX-06**: Audio effects for engine thrust, weapon fire, and explosions
-- [ ] **UIEX-07**: Modern 2D visual style with vector graphics and glow/neon effects
+- [x] **UIEX-06**: Audio effects for engine thrust, weapon fire, and explosions
+- [x] **UIEX-07**: Modern 2D visual style with vector graphics and glow/neon effects
 - [ ] **UIEX-08**: No account or registration required to start playing
 
 ### Infrastructure
@@ -151,8 +151,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | UIEX-03 | Phase 3 | Pending |
 | UIEX-04 | Phase 3 | Pending |
 | UIEX-05 | Phase 3 | Pending |
-| UIEX-06 | Phase 3 | Pending |
-| UIEX-07 | Phase 3 | Pending |
+| UIEX-06 | Phase 3 | Complete |
+| UIEX-07 | Phase 3 | Complete |
 | UIEX-08 | Phase 3 | Pending |
 | INFR-01 | Phase 4 | Pending |
 | INFR-02 | Phase 4 | Pending |
