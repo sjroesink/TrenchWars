@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Scaffold monorepo, define types/constants/ship configs, set up test and dev infrastructure
-- [ ] 01-02-PLAN.md -- Implement physics engine, wall collision, and map system with TDD
-- [ ] 01-03-PLAN.md -- Wire client rendering, input, game loop, and debug tools for playable sandbox
+- [x] 01-01-PLAN.md -- Scaffold monorepo, define types/constants/ship configs, set up test and dev infrastructure
+- [x] 01-02-PLAN.md -- Implement physics engine, wall collision, and map system with TDD
+- [x] 01-03-PLAN.md -- Wire client rendering, input, game loop, and debug tools for playable sandbox
 
 ### Phase 2: Multiplayer Combat
 **Goal**: Multiple players can connect to the same arena and fight each other in real-time with responsive controls and fair hit detection
@@ -46,12 +46,16 @@ Plans:
   3. Player can fire bombs that bounce off walls and deal area damage
   4. A killed player respawns at a safe location and can immediately continue fighting
   5. Three distinct ship types (Warbird, Javelin, Spider) are playable with noticeably different handling and combat characteristics
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md -- Server scaffold, shared combat types/protocol, weapon configs per ship
+- [ ] 02-02-PLAN.md -- Weapon physics TDD (bullets, bombs, hit detection, area damage)
+- [ ] 02-03-PLAN.md -- Authoritative game server with 100Hz loop, player management, weapon integration
+- [ ] 02-04-PLAN.md -- Client networking, client-side prediction, and server reconciliation
+- [ ] 02-05-PLAN.md -- Lag-compensated hit detection with position history rewind
+- [ ] 02-06-PLAN.md -- Entity interpolation, weapon rendering, remote player rendering
+- [ ] 02-07-PLAN.md -- Ship selection UI, reconnection support, and full combat verification
 
 ### Phase 3: Game Experience
 **Goal**: The game has structured modes, complete UI, audiovisual polish, and feels like a finished product rather than a tech demo
@@ -91,6 +95,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
-| 2. Multiplayer Combat | 0/3 | Not started | - |
+| 2. Multiplayer Combat | 0/7 | Not started | - |
 | 3. Game Experience | 0/3 | Not started | - |
 | 4. Production Launch | 0/1 | Not started | - |
