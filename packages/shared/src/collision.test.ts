@@ -60,7 +60,8 @@ describe('isCollidingWithWalls', () => {
   const radius = 0.875;
 
   it('returns false for ship in open area', () => {
-    expect(isCollidingWithWalls(5.5, 5.5, radius, map)).toBe(false);
+    // (6.5, 3.5) with radius 0.875 -> AABB [5.625..7.375, 2.625..4.375] - all empty tiles
+    expect(isCollidingWithWalls(6.5, 3.5, radius, map)).toBe(false);
   });
 
   it('returns true when ship overlaps wall tile', () => {
@@ -83,17 +84,18 @@ describe('isCollidingWithWalls', () => {
 describe('simulateAxis', () => {
   it('moves ship in open space without bounce (X axis)', () => {
     const map = makeTestMap();
-    const state = makeState({ x: 5.5, y: 5.5, vx: 10 });
+    // (6.5, 3.5) is in open space, far from internal wall at (4,5)
+    const state = makeState({ x: 6.5, y: 3.5, vx: 10 });
     const bounced = simulateAxis(state, 0.01, 'x', map, 0.875, DEFAULT_BOUNCE_FACTOR);
     expect(bounced).toBe(false);
-    expect(state.x).toBeCloseTo(5.6, 5);
+    expect(state.x).toBeCloseTo(6.6, 5);
   });
 
   it('bounces ship off wall (X axis) - velocity negated', () => {
     const map = makeTestMap();
     // Ship near right border (wall at x=9). Position 8.2 + 0.875 radius -> close to wall
-    // Moving right with high velocity
-    const state = makeState({ x: 8.2, y: 5.5, vx: 20 });
+    // Moving right with high velocity. y=3.5 avoids internal wall at (4,5)
+    const state = makeState({ x: 8.2, y: 3.5, vx: 20 });
     const bounced = simulateAxis(state, 0.01, 'x', map, 0.875, DEFAULT_BOUNCE_FACTOR);
     expect(bounced).toBe(true);
     expect(state.vx).toBeLessThan(0); // reversed
@@ -102,8 +104,8 @@ describe('simulateAxis', () => {
 
   it('bounces ship off wall (Y axis) - velocity negated', () => {
     const map = makeTestMap();
-    // Ship near bottom border (wall at y=9)
-    const state = makeState({ x: 5.5, y: 8.2, vy: 20 });
+    // Ship near bottom border (wall at y=9). x=6.5 avoids internal wall at (4,5)
+    const state = makeState({ x: 6.5, y: 8.2, vy: 20 });
     const bounced = simulateAxis(state, 0.01, 'y', map, 0.875, DEFAULT_BOUNCE_FACTOR);
     expect(bounced).toBe(true);
     expect(state.vy).toBeLessThan(0); // reversed
@@ -112,7 +114,7 @@ describe('simulateAxis', () => {
 
   it('applies bounce factor to velocity', () => {
     const map = makeTestMap();
-    const state = makeState({ x: 8.2, y: 5.5, vx: 20 });
+    const state = makeState({ x: 8.2, y: 3.5, vx: 20 });
     const bounceFactor = 0.5;
     simulateAxis(state, 0.01, 'x', map, 0.875, bounceFactor);
     expect(state.vx).toBeCloseTo(-10, 1); // 20 * -0.5 = -10
@@ -122,10 +124,10 @@ describe('simulateAxis', () => {
 describe('applyWallCollision', () => {
   it('applies axis-separated collision (X then Y)', () => {
     const map = makeTestMap();
-    // Ship in open area, should just move
-    const state = makeState({ x: 5.5, y: 5.5, vx: 5, vy: 5 });
+    // Ship in open area, should just move. (6.5, 3.5) avoids internal wall
+    const state = makeState({ x: 6.5, y: 3.5, vx: 5, vy: 5 });
     applyWallCollision(state, 0.01, map, 0.875, DEFAULT_BOUNCE_FACTOR);
-    expect(state.x).toBeCloseTo(5.55, 5);
-    expect(state.y).toBeCloseTo(5.55, 5);
+    expect(state.x).toBeCloseTo(6.55, 5);
+    expect(state.y).toBeCloseTo(3.55, 5);
   });
 });
