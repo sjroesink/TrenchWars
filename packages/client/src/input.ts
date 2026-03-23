@@ -14,6 +14,8 @@ export class InputManager {
   private keys: Map<string, boolean> = new Map();
   private firePressed = false;
   private fireBombPressed = false;
+  private chatActive = false;
+  private scoreboardHeld = false;
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -24,8 +26,14 @@ export class InputManager {
         this.firePressed = true;
         e.preventDefault();
       }
-      if ((e.code === 'Tab' || e.code === 'KeyF') && !e.repeat) {
+      if (e.code === 'KeyF' && !e.repeat) {
         this.fireBombPressed = true;
+        e.preventDefault();
+      }
+
+      // Tab key for scoreboard toggle
+      if (e.code === 'Tab') {
+        this.scoreboardHeld = true;
         e.preventDefault();
       }
 
@@ -41,10 +49,27 @@ export class InputManager {
     });
     window.addEventListener('keyup', (e) => {
       this.keys.set(e.code, false);
+
+      if (e.code === 'Tab') {
+        this.scoreboardHeld = false;
+      }
     });
   }
 
+  /** Set chat active state -- disables ship controls while typing */
+  setChatActive(active: boolean): void {
+    this.chatActive = active;
+  }
+
+  /** Returns true while Tab key is held down (for scoreboard display). */
+  isScoreboardHeld(): boolean {
+    return this.scoreboardHeld;
+  }
+
   poll(): ShipInput {
+    if (this.chatActive) {
+      return { left: false, right: false, thrust: false, reverse: false, afterburner: false };
+    }
     return {
       left: this.keys.get('ArrowLeft') ?? false,
       right: this.keys.get('ArrowRight') ?? false,
@@ -56,6 +81,9 @@ export class InputManager {
 
   /** Poll and consume fire button edges. Clears after read. */
   pollWeapons(): WeaponInput {
+    if (this.chatActive) {
+      return { fire: false, fireBomb: false };
+    }
     const result: WeaponInput = {
       fire: this.firePressed,
       fireBomb: this.fireBombPressed,

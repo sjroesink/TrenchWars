@@ -9,6 +9,11 @@ import { DebugPanel } from './debug';
 import { NetworkClient } from './network';
 import { PredictionManager } from './prediction';
 import { ShipSelectOverlay } from './ship-select';
+import { Chat } from './ui/chat';
+import { HUD } from './ui/hud';
+import { KillFeed } from './ui/kill-feed';
+import { Scoreboard } from './ui/scoreboard';
+import type { GameModeState, FFAState } from '@trench-wars/shared';
 
 /** Server WebSocket URL (configurable via query param or default) */
 function getServerUrl(): string {
@@ -49,6 +54,21 @@ async function main(): Promise<void> {
   const renderer = new Renderer();
   await renderer.init(tileMap);
 
+  // UI overlays (created before network so handlers can reference them)
+  const hud = new HUD();
+  const killFeed = new KillFeed();
+  const scoreboard = new Scoreboard();
+
+  // Player name tracking for kill feed name resolution
+  const playerNames = new Map<string, string>();
+
+  // Chat overlay
+  let networkRef: NetworkClient | undefined;
+  const chat = new Chat(
+    (message) => { if (networkRef?.isConnected()) networkRef.sendChat(message); },
+    (active) => { inputManager.setChatActive(active); },
+  );
+
   // Attempt server connection
   const serverUrl = getServerUrl();
   let network: NetworkClient | undefined;
@@ -88,6 +108,7 @@ async function main(): Promise<void> {
           network,
           prediction,
           playerId,
+          hud,
         });
 
         // Create debug panel (references the same mutable config and state)
@@ -103,6 +124,18 @@ async function main(): Promise<void> {
 
         // Start the game loop after welcome
         gameLoop.start();
+
+        // Scoreboard toggle driven by Tab key hold
+        function updateScoreboard(): void {
+          if (inputManager.isScoreboardHeld()) {
+            scoreboard.show();
+          } else {
+            scoreboard.hide();
+          }
+          requestAnimationFrame(updateScoreboard);
+        }
+        requestAnimationFrame(updateScoreboard);
+
         console.log('TrenchWars client started (networked)');
       },
 
@@ -113,15 +146,29 @@ async function main(): Promise<void> {
       },
 
       onPlayerJoin: (data) => {
+        playerNames.set(data.playerId, data.name);
         console.log(`Player joined: ${data.name} (${data.playerId})`);
       },
 
       onPlayerLeave: (data) => {
+        playerNames.delete(data.playerId);
         console.log(`Player left: ${data.playerId}`);
       },
 
       onDeath: (data) => {
-        console.log(`Kill: ${data.killerId} -> ${data.killedId} (${data.weaponType})`);
+        const killerName = playerNames.get(data.killerId) || data.killerId;
+        const victimName = playerNames.get(data.killedId) || data.killedId;
+        const weaponType = (data.weaponType === 'bomb' ? 'bomb' : 'bullet') as 'bullet' | 'bomb';
+        killFeed.addKill(killerName, victimName, weaponType);
+        console.log(`Kill: ${killerName} -> ${victimName} (${data.weaponType})`);
+      },
+
+      onScoreUpdate: (data) => {
+        const state = data.state;
+        if (state.type === 'ffa') {
+          const ffaState = state as FFAState;
+          scoreboard.update(ffaState.leaderboard, playerId || '');
+        }
       },
 
       onSpawn: (data) => {
@@ -139,6 +186,10 @@ async function main(): Promise<void> {
         console.log(`Ping: ${rtt}ms`);
       },
 
+      onChat: (data) => {
+        chat.addMessage(data.name, data.message);
+      },
+
       onDisconnect: () => {
         console.warn('Disconnected from server -- attempting reconnect...');
       },
@@ -148,6 +199,7 @@ async function main(): Promise<void> {
       },
     });
 
+    networkRef = network;
     await network.connect(serverUrl);
 
     // Send JOIN after connection with selected ship type
@@ -164,6 +216,7 @@ async function main(): Promise<void> {
       inputManager,
       camera,
       renderer,
+      hud,
     });
 
     // Create debug panel

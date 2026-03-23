@@ -7,6 +7,7 @@ import type { NetworkClient } from './network';
 import type { PredictionManager } from './prediction';
 import { InterpolationManager } from './interpolation';
 import type { InterpolatedEntity } from './interpolation';
+import type { HUD } from './ui/hud';
 
 export interface RemotePlayer {
   id: string;
@@ -32,6 +33,8 @@ export interface GameLoopOptions {
   network?: NetworkClient;
   prediction?: PredictionManager;
   playerId?: string;
+  // Optional UI overlays
+  hud?: HUD;
 }
 
 /**
@@ -58,6 +61,13 @@ export class GameLoop {
   private prediction: PredictionManager | null;
   private playerId: string | null;
   private localTick = 0;
+
+  // UI overlays (optional)
+  private hud: HUD | null;
+
+  // Player score tracking (updated from snapshots)
+  kills = 0;
+  deaths = 0;
 
   // Remote players from latest server snapshot
   private remotePlayers: Map<string, RemotePlayer> = new Map();
@@ -86,6 +96,7 @@ export class GameLoop {
     this.network = options.network ?? null;
     this.prediction = options.prediction ?? null;
     this.playerId = options.playerId ?? null;
+    this.hud = options.hud ?? null;
   }
 
   /** Allow external mutation of bounce factor (debug panel). */
@@ -136,6 +147,10 @@ export class GameLoop {
       this.shipState.vy = reconciled.vy;
       this.shipState.orientation = reconciled.orientation;
       this.shipState.energy = reconciled.energy;
+
+      // Track kills/deaths for HUD
+      this.kills = localData.kills;
+      this.deaths = localData.deaths;
     }
 
     // Store remote players (everyone except local player)
@@ -235,6 +250,11 @@ export class GameLoop {
       this.renderer.app.screen.width,
       this.renderer.app.screen.height,
     );
+    // Update HUD overlay
+    if (this.hud) {
+      this.hud.update(this.shipState.energy, this.shipConfig.energy, this.kills, this.deaths);
+    }
+
     // Build interpolated remote player map for rendering
     let interpolatedRemotes: Map<string, InterpolatedEntity> | undefined;
     let projectiles: GameSnapshot['projectiles'] | undefined;
@@ -254,6 +274,12 @@ export class GameLoop {
     }
 
     this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles);
+
+    // Render radar minimap with player positions
+    this.renderer.renderRadar(
+      { x: this.shipState.x, y: this.shipState.y },
+      interpolatedRemotes,
+    );
 
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }

@@ -1,5 +1,6 @@
 import { ClientMsg, ServerMsg } from '@trench-wars/shared';
 import type { ShipInput, GameSnapshot } from '@trench-wars/shared';
+import type { GameModeState } from '@trench-wars/shared';
 
 export type ServerMessageHandler = {
   onWelcome: (data: { playerId: string; tick: number; mapName: string; sessionToken?: string; reconnected?: boolean }) => void;
@@ -9,6 +10,9 @@ export type ServerMessageHandler = {
   onDeath: (data: { killerId: string; killedId: string; weaponType: string }) => void;
   onSpawn: (data: { playerId: string; x: number; y: number }) => void;
   onPong: (data: { clientTime: number; serverTime: number }) => void;
+  onScoreUpdate?: (data: { state: GameModeState }) => void;
+  onChat?: (data: { playerId: string; name: string; message: string }) => void;
+  onGameState?: (data: { event: string; [key: string]: unknown }) => void;
   onDisconnect?: () => void;
   onReconnect?: () => void;
 };
@@ -80,6 +84,10 @@ export class NetworkClient {
 
   sendPing(): void {
     this.send({ type: ClientMsg.PING, clientTime: Date.now() });
+  }
+
+  sendChat(message: string): void {
+    this.send({ type: ClientMsg.CHAT, message });
   }
 
   isConnected(): boolean {
@@ -172,6 +180,15 @@ export class NetworkClient {
         break;
       case ServerMsg.PONG:
         this.handlers.onPong(msg);
+        break;
+      case ServerMsg.SCORE_UPDATE:
+        this.handlers.onScoreUpdate?.(msg);
+        break;
+      case ServerMsg.CHAT:
+        this.handlers.onChat?.(msg);
+        break;
+      case ServerMsg.GAME_STATE:
+        this.handlers.onGameState?.(msg);
         break;
     }
   }

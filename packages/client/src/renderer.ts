@@ -8,6 +8,7 @@ import type { InterpolatedEntity } from './interpolation';
 import { WeaponRenderer } from './weapon-renderer';
 import { RemotePlayerRenderer } from './remote-player';
 import { VisualEffects } from './visual-effects';
+import { Radar } from './ui/radar';
 
 export class Renderer {
   readonly app: Application;
@@ -19,6 +20,7 @@ export class Renderer {
   private weaponRenderer!: WeaponRenderer;
   private remotePlayerRenderer!: RemotePlayerRenderer;
   private visualEffects!: VisualEffects;
+  private radar!: Radar;
 
   constructor() {
     this.app = new Application();
@@ -91,6 +93,9 @@ export class Renderer {
     });
     this.shipContainer.filters = [shipGlow];
 
+    // Radar minimap (last child so it renders on top of all game elements)
+    this.radar = new Radar(this.app.stage, map.width);
+
     // Global bloom filter for neon aesthetic
     const bloom = new AdvancedBloomFilter({
       threshold: 0.4,
@@ -115,6 +120,19 @@ export class Renderer {
   /** Render visual effects (exhaust particles, explosions) */
   renderEffects(camera: Camera): void {
     this.visualEffects.render(camera);
+  }
+
+  /** Render the radar minimap with player positions */
+  renderRadar(
+    localPlayer: { x: number; y: number },
+    remotePlayers: Map<string, InterpolatedEntity> | undefined,
+  ): void {
+    this.radar.render(
+      localPlayer,
+      remotePlayers || new Map(),
+      this.app.screen.width,
+      this.app.screen.height,
+    );
   }
 
   render(
