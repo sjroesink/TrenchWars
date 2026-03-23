@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CMBT-03**: Bullets damage other players on hit and are destroyed
 - [x] **CMBT-04**: Player can fire bombs that bounce off walls
 - [x] **CMBT-05**: Bombs deal area damage on impact with a player or after timeout
-- [ ] **CMBT-06**: Player dies when health reaches zero
-- [ ] **CMBT-07**: Kill and death counts are tracked per player
-- [ ] **CMBT-08**: Player respawns at a random safe location after death
+- [x] **CMBT-06**: Player dies when health reaches zero
+- [x] **CMBT-07**: Kill and death counts are tracked per player
+- [x] **CMBT-08**: Player respawns at a random safe location after death
 - [ ] **CMBT-09**: Server performs lag-compensated hit detection for fair combat
 
 ### Ships
@@ -134,9 +134,9 @@ Requirements for initial release. Each maps to roadmap phases.
 | CMBT-03 | Phase 2 | Complete |
 | CMBT-04 | Phase 2 | Complete |
 | CMBT-05 | Phase 2 | Complete |
-| CMBT-06 | Phase 2 | Pending |
-| CMBT-07 | Phase 2 | Pending |
-| CMBT-08 | Phase 2 | Pending |
+| CMBT-06 | Phase 2 | Complete |
+| CMBT-07 | Phase 2 | Complete |
+| CMBT-08 | Phase 2 | Complete |
 | CMBT-09 | Phase 2 | Pending |
 | SHIP-01 | Phase 2 | Complete |
 | SHIP-02 | Phase 2 | Complete |
