@@ -1,13 +1,15 @@
 import { Container, Graphics } from 'pixi.js';
+import type { TileMap } from '@trench-wars/shared';
 import type { InterpolatedEntity } from '../interpolation';
 
 /**
- * PixiJS-based minimap showing player positions as colored dots.
+ * PixiJS-based minimap showing player positions and wall outlines.
  * Positioned at bottom-right of the screen, 160x160px.
  */
 export class Radar {
   private container: Container;
   private background: Graphics;
+  private wallLayer: Graphics;
   private dots: Graphics;
   private scale: number;
 
@@ -16,7 +18,7 @@ export class Radar {
   /** Inset from screen edge */
   private static readonly MARGIN = 16;
 
-  constructor(parent: Container, mapSize: number) {
+  constructor(parent: Container, mapSize: number, map?: TileMap) {
     this.scale = Radar.SIZE / mapSize;
 
     this.container = new Container();
@@ -29,11 +31,35 @@ export class Radar {
     this.background.stroke({ color: 0xffffff, alpha: 0.2, width: 1 });
     this.container.addChild(this.background);
 
+    // Wall layer (rendered once, static)
+    this.wallLayer = new Graphics();
+    if (map) {
+      this.renderWalls(map);
+    }
+    this.container.addChild(this.wallLayer);
+
     // Dots layer (cleared and redrawn each frame)
     this.dots = new Graphics();
     this.container.addChild(this.dots);
 
     parent.addChild(this.container);
+  }
+
+  /** Render wall tiles as small dots on the minimap (called once at init) */
+  private renderWalls(map: TileMap): void {
+    this.wallLayer.clear();
+    // Sample walls at a lower resolution to avoid rendering 40k tiles
+    const step = Math.max(1, Math.floor(1 / this.scale));
+    for (let y = 0; y < map.height; y += step) {
+      for (let x = 0; x < map.width; x += step) {
+        if (map.tiles[y * map.width + x] !== 0) {
+          const rx = x * this.scale;
+          const ry = y * this.scale;
+          this.wallLayer.rect(rx, ry, Math.max(1, this.scale * step), Math.max(1, this.scale * step));
+        }
+      }
+    }
+    this.wallLayer.fill({ color: 0x334466, alpha: 0.3 });
   }
 
   /** Reposition the radar container when screen resizes */

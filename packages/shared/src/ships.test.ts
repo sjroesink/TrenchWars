@@ -30,7 +30,7 @@ describe('ShipState interface', () => {
 describe('ShipInput interface', () => {
   it('has required fields', () => {
     const input: ShipInput = {
-      left: false, right: false, thrust: false, reverse: false, afterburner: false,
+      left: false, right: false, thrust: false, reverse: false, afterburner: false, multifire: false,
     };
     expect(input).toHaveProperty('thrust');
     expect(input).toHaveProperty('reverse');

@@ -13,6 +13,7 @@ export interface ShipInput {
   thrust: boolean;
   reverse: boolean;
   afterburner: boolean;
+  multifire: boolean;
 }
 
 export interface ShipConfig {
@@ -56,6 +57,10 @@ export interface WeaponConfig {
   bombFireEnergy: number;    // energy cost per bomb
   bombBounceCount: number;   // wall bounces before explosion
   bombThrust: number;        // tiles/s recoil on bomb fire (SVS: value / 100 * 10 / 16)
+  multifireCount: number;    // number of bullets in multifire (0 = disabled)
+  multifireEnergy: number;   // energy cost for multifire
+  multifireDelay: number;    // seconds between multifire shots
+  multifireAngle: number;    // spread angle in radians between each bullet
 }
 
 export interface ProjectileState {

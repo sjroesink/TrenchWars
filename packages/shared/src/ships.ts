@@ -113,6 +113,10 @@ export const WARBIRD_WEAPONS: WeaponConfig = {
   bombFireEnergy: 300,
   bombBounceCount: 0,               // Warbird: no bombs in TW
   bombThrust: 50 / 100 * 10 / 16,  // recoil
+  multifireCount: 0,                // Warbird: no multifire
+  multifireEnergy: 450,
+  multifireDelay: 100 / 100,
+  multifireAngle: 0,
 };
 
 export const JAVELIN_WEAPONS: WeaponConfig = {
@@ -124,6 +128,10 @@ export const JAVELIN_WEAPONS: WeaponConfig = {
   bombFireEnergy: 1100,
   bombBounceCount: 1,               // Javelin: bounces once, explodes on second wall hit
   bombThrust: 50 / 100 * 10 / 16,  // recoil
+  multifireCount: 3,                // Javelin: 3 rear bullets on Ctrl
+  multifireEnergy: 450,             // TW: MF-E=450 for Jav
+  multifireDelay: 150 / 100,        // 1.50 seconds (TW: MF-D=150)
+  multifireAngle: 0.05,             // small spread between bullets
 };
 
 export const SPIDER_WEAPONS: WeaponConfig = {
@@ -135,6 +143,10 @@ export const SPIDER_WEAPONS: WeaponConfig = {
   bombFireEnergy: 300,
   bombBounceCount: 0,               // Spider: no bomb bounces
   bombThrust: 50 / 100 * 10 / 16,  // recoil
+  multifireCount: 0,                // Spider: no multifire
+  multifireEnergy: 225,
+  multifireDelay: 35 / 100,
+  multifireAngle: 0,
 };
 
 // Indexed by ship type number (0=Warbird, 1=Javelin, 2=Spider)

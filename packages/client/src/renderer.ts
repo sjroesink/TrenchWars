@@ -94,7 +94,7 @@ export class Renderer {
     this.shipContainer.filters = [shipGlow];
 
     // Radar minimap (last child so it renders on top of all game elements)
-    this.radar = new Radar(this.app.stage, map.width);
+    this.radar = new Radar(this.app.stage, map.width, map);
 
     // Global bloom filter for neon aesthetic
     const bloom = new AdvancedBloomFilter({

@@ -19,6 +19,6 @@ export { applyRotation, applyThrust, clampSpeed, updateEnergy, updateShipPhysics
 export { isWallAt, isCollidingWithWalls, simulateAxis, applyWallCollision } from './collision';
 export { parseMap, generateTestArena } from './map';
 export {
-  createBullet, createBomb, updateProjectile,
+  createBullet, createBomb, createMultifire, updateProjectile,
   checkProjectileHit, calculateBombDamage,
 } from './weapons';

@@ -74,8 +74,8 @@ export class NetworkClient {
     this.send(msg);
   }
 
-  sendInput(seq: number, tick: number, input: ShipInput, fire: boolean, fireBomb: boolean): void {
-    this.send({ type: ClientMsg.INPUT, seq, tick, input, fire, fireBomb });
+  sendInput(seq: number, tick: number, input: ShipInput, fire: boolean, fireBomb: boolean, multifire: boolean): void {
+    this.send({ type: ClientMsg.INPUT, seq, tick, input, fire, fireBomb, multifire });
   }
 
   sendShipSelect(shipType: number): void {

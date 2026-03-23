@@ -3,6 +3,7 @@ import type { ShipInput } from '@trench-wars/shared';
 export interface WeaponInput {
   fire: boolean;
   fireBomb: boolean;
+  multifire: boolean;
 }
 
 /**
@@ -14,6 +15,7 @@ export class InputManager {
   private keys: Map<string, boolean> = new Map();
   private firePressed = false;
   private fireBombPressed = false;
+  private multifirePressed = false;
   private chatActive = false;
   private scoreboardHeld = false;
 
@@ -28,6 +30,10 @@ export class InputManager {
       }
       if (e.code === 'KeyF' && !e.repeat) {
         this.fireBombPressed = true;
+        e.preventDefault();
+      }
+      if ((e.code === 'ControlLeft' || e.code === 'ControlRight') && !e.repeat) {
+        this.multifirePressed = true;
         e.preventDefault();
       }
 
@@ -68,7 +74,7 @@ export class InputManager {
 
   poll(): ShipInput {
     if (this.chatActive) {
-      return { left: false, right: false, thrust: false, reverse: false, afterburner: false };
+      return { left: false, right: false, thrust: false, reverse: false, afterburner: false, multifire: false };
     }
     return {
       left: this.keys.get('ArrowLeft') ?? false,
@@ -76,20 +82,23 @@ export class InputManager {
       thrust: this.keys.get('ArrowUp') ?? false,
       reverse: this.keys.get('ArrowDown') ?? false,
       afterburner: this.keys.get('ShiftLeft') ?? this.keys.get('ShiftRight') ?? false,
+      multifire: this.keys.get('ControlLeft') ?? this.keys.get('ControlRight') ?? false,
     };
   }
 
   /** Poll and consume fire button edges. Clears after read. */
   pollWeapons(): WeaponInput {
     if (this.chatActive) {
-      return { fire: false, fireBomb: false };
+      return { fire: false, fireBomb: false, multifire: false };
     }
     const result: WeaponInput = {
       fire: this.firePressed,
       fireBomb: this.fireBombPressed,
+      multifire: this.multifirePressed,
     };
     this.firePressed = false;
     this.fireBombPressed = false;
+    this.multifirePressed = false;
     return result;
   }
 }

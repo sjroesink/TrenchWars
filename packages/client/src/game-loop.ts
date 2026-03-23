@@ -249,11 +249,13 @@ export class GameLoop {
           input,
           weapons.fire,
           weapons.fireBomb,
+          weapons.multifire,
         );
 
         // Fire audio callbacks
         if (weapons.fire && this.onFire) this.onFire('bullet');
         if (weapons.fireBomb && this.onFire) this.onFire('bomb');
+        if (weapons.multifire && this.onFire) this.onFire('bullet');
       }
 
       // Apply physics locally (both networked prediction and local-only modes)

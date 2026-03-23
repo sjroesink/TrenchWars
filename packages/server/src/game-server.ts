@@ -28,7 +28,7 @@ const NEUTRAL_INPUT: ShipInput = {
   right: false,
   thrust: false,
   reverse: false,
-  afterburner: false,
+  afterburner: false, multifire: false,
 };
 
 interface QueuedInput {
@@ -36,6 +36,7 @@ interface QueuedInput {
   data: ShipInput;
   fire: boolean;
   fireBomb: boolean;
+  multifire: boolean;
 }
 
 export interface GameServerOptions {
@@ -161,6 +162,9 @@ export class GameServer {
         }
         if (input.fireBomb) {
           this.weaponManager.fireBomb(player, weaponConfig, this.tickCount);
+        }
+        if (input.multifire) {
+          this.weaponManager.fireMultifire(player, weaponConfig, this.tickCount);
         }
       } else {
         // No input queued: still run physics with neutral input for speed clamping
@@ -368,6 +372,7 @@ export class GameServer {
       data: msg.input as ShipInput,
       fire: (msg.fire as boolean) ?? false,
       fireBomb: (msg.fireBomb as boolean) ?? false,
+      multifire: (msg.multifire as boolean) ?? false,
     });
   }
 

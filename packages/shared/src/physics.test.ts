@@ -13,7 +13,7 @@ function makeState(overrides?: Partial<ShipState>): ShipState {
 
 function makeInput(overrides?: Partial<ShipInput>): ShipInput {
   return {
-    left: false, right: false, thrust: false, reverse: false, afterburner: false,
+    left: false, right: false, thrust: false, reverse: false, afterburner: false, multifire: false,
     ...overrides,
   };
 }

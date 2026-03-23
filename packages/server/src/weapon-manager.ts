@@ -2,6 +2,7 @@ import type { PlayerState, ProjectileState, TileMap, WeaponConfig } from '@trenc
 import {
   createBullet,
   createBomb,
+  createMultifire,
   updateProjectile,
   checkProjectileHit,
   calculateBombDamage,
@@ -19,8 +20,8 @@ import type { LagCompensation } from './lag-compensation';
 export class WeaponManager {
   private projectiles: ProjectileState[] = [];
   private nextId = 1;
-  /** Per-player cooldown tracking: playerId -> { nextBulletTick, nextBombTick } */
-  private cooldowns = new Map<string, { nextBulletTick: number; nextBombTick: number }>();
+  /** Per-player cooldown tracking */
+  private cooldowns = new Map<string, { nextBulletTick: number; nextBombTick: number; nextMultifireTick: number }>();
   /** Tracks the tick at which each projectile was created, for lag compensation rewind. */
   private creationTicks = new Map<number, number>();
   private lagCompensation: LagCompensation | null;
@@ -32,10 +33,10 @@ export class WeaponManager {
   /**
    * Get or create cooldown entry for a player.
    */
-  private getCooldown(playerId: string): { nextBulletTick: number; nextBombTick: number } {
+  private getCooldown(playerId: string): { nextBulletTick: number; nextBombTick: number; nextMultifireTick: number } {
     let cd = this.cooldowns.get(playerId);
     if (!cd) {
-      cd = { nextBulletTick: 0, nextBombTick: 0 };
+      cd = { nextBulletTick: 0, nextBombTick: 0, nextMultifireTick: 0 };
       this.cooldowns.set(playerId, cd);
     }
     return cd;
@@ -79,6 +80,28 @@ export class WeaponManager {
     player.ship.vx += recoilVx;
     player.ship.vy += recoilVy;
     cd.nextBombTick = tick + Math.ceil(weaponConfig.bombFireDelay * 100);
+    return true;
+  }
+
+  /**
+   * Attempt to fire multifire (e.g., Javelin 3-shot rear spread).
+   * Checks cooldown, energy, and that the ship has multifire configured.
+   */
+  fireMultifire(player: PlayerState, weaponConfig: WeaponConfig, tick: number): boolean {
+    if (weaponConfig.multifireCount <= 0) return false;
+    const cd = this.getCooldown(player.id);
+    if (tick < cd.nextMultifireTick) return false;
+    if (player.ship.energy < weaponConfig.multifireEnergy) return false;
+
+    player.ship.energy -= weaponConfig.multifireEnergy;
+    const startId = this.nextId;
+    this.nextId += weaponConfig.multifireCount;
+    const bullets = createMultifire(player.ship, weaponConfig, player.id, startId, tick);
+    for (const b of bullets) {
+      this.projectiles.push(b);
+      this.creationTicks.set(b.id, tick);
+    }
+    cd.nextMultifireTick = tick + Math.ceil(weaponConfig.multifireDelay * 100);
     return true;
   }
 
@@ -128,20 +151,15 @@ export class WeaponManager {
         continue;
       }
 
-      // Check hit against alive players using lag-compensated positions
-      const creationTick = this.creationTicks.get(proj.id);
-      const historicalPositions = (this.lagCompensation && creationTick !== undefined)
-        ? this.lagCompensation.getPositionsAtTick(creationTick)
-        : null;
-
+      // Check hit against alive players using CURRENT positions.
+      // Projectiles physically travel through space, so they collide with
+      // where players are NOW, not where they were when the bullet was created.
+      // (Lag compensation / rewind is for instant hit-scan, not traveling projectiles.)
       for (const player of alivePlayers) {
         const config = SHIP_CONFIGS[player.shipType];
-
-        // Use historical position if available, otherwise fall back to current
-        const histPos = historicalPositions?.get(player.id);
-        const checkX = histPos ? histPos.x : player.ship.x;
-        const checkY = histPos ? histPos.y : player.ship.y;
-        const checkRadius = histPos ? histPos.radius : config.radius;
+        const checkX = player.ship.x;
+        const checkY = player.ship.y;
+        const checkRadius = config.radius;
 
         if (checkProjectileHit(proj, checkX, checkY, checkRadius, player.id)) {
           if (proj.type === 'bullet') {

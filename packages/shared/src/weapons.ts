@@ -40,6 +40,48 @@ export function createBullet(
 }
 
 /**
+ * Create multifire bullets (e.g., Javelin rear 3-shot spread).
+ * Returns an array of projectiles. Uses bulletSpeed (negative = rear-facing).
+ * Spread is symmetric around the ship heading with config.multifireAngle between each.
+ */
+export function createMultifire(
+  ship: ShipState,
+  config: WeaponConfig,
+  ownerId: string,
+  startId: number,
+  currentTick: number,
+): ProjectileState[] {
+  const count = config.multifireCount;
+  if (count <= 0) return [];
+
+  const baseAngle = ship.orientation * 2 * Math.PI;
+  const projectiles: ProjectileState[] = [];
+
+  for (let i = 0; i < count; i++) {
+    // Spread bullets symmetrically: -(count-1)/2 to +(count-1)/2
+    const offsetIndex = i - (count - 1) / 2;
+    const angle = baseAngle + offsetIndex * config.multifireAngle;
+    const headingX = Math.cos(angle);
+    const headingY = Math.sin(angle);
+
+    projectiles.push({
+      id: startId + i,
+      ownerId,
+      type: 'bullet',
+      x: ship.x,
+      y: ship.y,
+      vx: ship.vx + headingX * config.bulletSpeed,
+      vy: ship.vy + headingY * config.bulletSpeed,
+      level: 0,
+      bouncesRemaining: 0,
+      endTick: currentTick + BULLET_ALIVE_TIME,
+    });
+  }
+
+  return projectiles;
+}
+
+/**
  * Create a bomb projectile from ship state.
  * Returns the projectile and recoil velocities to apply to the ship.
  */
