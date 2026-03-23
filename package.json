@@ -1,0 +1,7 @@
+{
+  "name": "trench-wars",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@trench-wars/client",
+  "version": "0.0.1",
+  "type": "module",
+  "dependencies": {
+    "pixi.js": "^8.17.1",
+    "@pixi/tilemap": "^5.0.2",
+    "@trench-wars/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9",
+    "vite": "^6",
+    "lil-gui": "^0.21.0"
+  }
+}
