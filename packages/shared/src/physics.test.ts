@@ -146,17 +146,24 @@ describe('speed clamp', () => {
 });
 
 describe('afterburner energy', () => {
-  it('drains at afterburnerCost rate', () => {
+  it('drains at afterburnerCost rate when thrusting', () => {
     const state = makeState({ energy: 1500 });
-    updateEnergy(state, makeInput({ afterburner: true }), WARBIRD, 1.0);
+    updateEnergy(state, makeInput({ afterburner: true, thrust: true }), WARBIRD, 1.0);
     // drain 550, recharge 400 -> 1500 - 550 + 400 = 1350
     expect(state.energy).toBeCloseTo(1350, 1);
   });
 
+  it('does not drain when only holding shift without thrust', () => {
+    const state = makeState({ energy: 1500 });
+    updateEnergy(state, makeInput({ afterburner: true }), WARBIRD, 1.0);
+    // no drain, only recharge 400 -> capped at 1500
+    expect(state.energy).toBe(1500);
+  });
+
   it('does not drain when energy is 0', () => {
     const state = makeState({ energy: 0 });
-    updateEnergy(state, makeInput({ afterburner: true }), WARBIRD, 1.0);
-    // no drain, recharge 400 -> capped at maxEnergy=1500
+    updateEnergy(state, makeInput({ afterburner: true, thrust: true }), WARBIRD, 1.0);
+    // no drain (energy is 0), recharge 400
     expect(state.energy).toBeCloseTo(400, 1);
   });
 });

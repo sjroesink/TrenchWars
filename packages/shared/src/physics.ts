@@ -76,7 +76,8 @@ export function updateEnergy(
   config: ShipConfig,
   dt: number,
 ): void {
-  if (input.afterburner && state.energy > 0) {
+  // Afterburner only drains energy when actually thrusting (forward or reverse)
+  if (input.afterburner && (input.thrust || input.reverse) && state.energy > 0) {
     state.energy -= config.afterburnerCost * dt;
   }
   state.energy += config.recharge * dt;

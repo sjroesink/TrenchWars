@@ -360,18 +360,14 @@ export class GameLoop {
         }
       }
       const serverProjectiles = this.interpolation.getProjectiles();
-      // Merge local predicted projectiles with server projectiles
-      // Remove local ones that the server now tracks (match by ownerId + proximity)
+      // Remove local predictions once server has projectiles from this player
+      // (server is authoritative — once it confirms, drop all local predictions)
       if (serverProjectiles.length > 0 && this.localProjectiles.length > 0) {
-        for (let i = this.localProjectiles.length - 1; i >= 0; i--) {
-          const local = this.localProjectiles[i];
-          const hasServerVersion = serverProjectiles.some(
-            (sp) => sp.ownerId === local.ownerId && sp.type === local.type &&
-              Math.abs(sp.x - local.x) < 3 && Math.abs(sp.y - local.y) < 3,
-          );
-          if (hasServerVersion) {
-            this.localProjectiles.splice(i, 1);
-          }
+        const serverHasOurs = serverProjectiles.some(
+          (sp) => sp.ownerId === this.playerId,
+        );
+        if (serverHasOurs) {
+          this.localProjectiles = [];
         }
       }
       // Combine: server projectiles + remaining local predictions

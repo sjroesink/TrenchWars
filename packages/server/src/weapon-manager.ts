@@ -132,9 +132,10 @@ export class WeaponManager {
       const status = updateProjectile(proj, map, dt);
 
       if (status === 'wall_explode') {
-        // For bombs, apply area damage on wall explosion
+        // For bombs, apply area damage on wall explosion (skip owner — no self-damage)
         if (proj.type === 'bomb') {
           for (const player of alivePlayers) {
+            if (player.id === proj.ownerId) continue;
             const dx = proj.x - player.ship.x;
             const dy = proj.y - player.ship.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
