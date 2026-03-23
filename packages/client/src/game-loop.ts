@@ -5,6 +5,8 @@ import type { Camera } from './camera';
 import type { Renderer } from './renderer';
 import type { NetworkClient } from './network';
 import type { PredictionManager } from './prediction';
+import { InterpolationManager } from './interpolation';
+import type { InterpolatedEntity } from './interpolation';
 
 export interface RemotePlayer {
   id: string;
@@ -60,6 +62,9 @@ export class GameLoop {
   // Remote players from latest server snapshot
   private remotePlayers: Map<string, RemotePlayer> = new Map();
 
+  // Interpolation for smooth remote entity rendering
+  private interpolation = new InterpolationManager();
+
   private accumulator = 0;
   private lastTime = 0;
   private running = false;
@@ -97,6 +102,9 @@ export class GameLoop {
    * Handle a server snapshot: reconcile local player, store remote players.
    */
   onSnapshot(snapshot: GameSnapshot): void {
+    // Always feed snapshots to interpolation manager (even without prediction)
+    this.interpolation.addSnapshot(snapshot);
+
     if (!this.prediction || !this.playerId) return;
 
     // Find local player in snapshot
@@ -227,7 +235,25 @@ export class GameLoop {
       this.renderer.app.screen.width,
       this.renderer.app.screen.height,
     );
-    this.renderer.render(this.shipState, this.camera);
+    // Build interpolated remote player map for rendering
+    let interpolatedRemotes: Map<string, InterpolatedEntity> | undefined;
+    let projectiles: GameSnapshot['projectiles'] | undefined;
+
+    if (this.playerId) {
+      const remoteIds = this.interpolation.getRemotePlayerIds(this.playerId);
+      if (remoteIds.length > 0) {
+        interpolatedRemotes = new Map();
+        for (const id of remoteIds) {
+          const entity = this.interpolation.getInterpolatedPlayer(id);
+          if (entity) {
+            interpolatedRemotes.set(id, entity);
+          }
+        }
+      }
+      projectiles = this.interpolation.getProjectiles();
+    }
+
+    this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles);
 
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }

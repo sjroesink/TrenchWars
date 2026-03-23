@@ -1,7 +1,10 @@
 import { Application, Graphics, Container } from 'pixi.js';
-import type { ShipState, TileMap } from '@trench-wars/shared';
+import type { ShipState, TileMap, GameSnapshot } from '@trench-wars/shared';
 import { TILE_SIZE } from '@trench-wars/shared';
 import type { Camera } from './camera';
+import type { InterpolatedEntity } from './interpolation';
+import { WeaponRenderer } from './weapon-renderer';
+import { RemotePlayerRenderer } from './remote-player';
 
 export class Renderer {
   readonly app: Application;
@@ -9,6 +12,8 @@ export class Renderer {
   private wallGraphics!: Graphics;
   private tilemapContainer!: Container;
   private mapData!: TileMap;
+  private weaponRenderer!: WeaponRenderer;
+  private remotePlayerRenderer!: RemotePlayerRenderer;
 
   constructor() {
     this.app = new Application();
@@ -34,14 +39,30 @@ export class Renderer {
     this.wallGraphics = new Graphics();
     this.tilemapContainer.addChild(this.wallGraphics);
 
-    // Ship sprite: arrow pointing right = orientation 0 = east
+    // Remote players layer (behind projectiles and local ship)
+    this.remotePlayerRenderer = new RemotePlayerRenderer(this.app.stage);
+
+    // Weapon/projectile layer (above remote players, below local ship)
+    this.weaponRenderer = new WeaponRenderer(this.app.stage);
+
+    // Ship sprite: arrow pointing right = orientation 0 = east (on top)
     this.shipGraphics = new Graphics();
     this.shipGraphics.poly([-8, -6, 12, 0, -8, 6]);
     this.shipGraphics.fill({ color: 0x00ff88 });
     this.app.stage.addChild(this.shipGraphics);
   }
 
-  render(state: ShipState, camera: Camera): void {
+  /** Trigger an explosion effect at a world position */
+  addExplosion(x: number, y: number): void {
+    this.weaponRenderer.addExplosion(x, y);
+  }
+
+  render(
+    state: ShipState,
+    camera: Camera,
+    remotePlayers?: Map<string, InterpolatedEntity>,
+    projectiles?: GameSnapshot['projectiles'],
+  ): void {
     const screenW = this.app.screen.width;
     const screenH = this.app.screen.height;
 
@@ -75,7 +96,17 @@ export class Renderer {
     this.tilemapContainer.x = offsetX;
     this.tilemapContainer.y = offsetY;
 
-    // Ship sprite
+    // Remote players
+    if (remotePlayers) {
+      this.remotePlayerRenderer.render(remotePlayers, camera);
+    }
+
+    // Projectiles and explosions
+    if (projectiles) {
+      this.weaponRenderer.render(projectiles, camera);
+    }
+
+    // Ship sprite (local player -- rendered on top)
     const shipScreen = camera.worldToScreen(state.x, state.y);
     this.shipGraphics.x = shipScreen.x;
     this.shipGraphics.y = shipScreen.y;
