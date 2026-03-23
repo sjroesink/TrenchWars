@@ -17,3 +17,7 @@ export type { NetworkMessage } from './protocol';
 export { applyRotation, applyThrust, clampSpeed, updateEnergy, updateShipPhysics } from './physics';
 export { isWallAt, isCollidingWithWalls, simulateAxis, applyWallCollision } from './collision';
 export { parseMap, generateTestArena } from './map';
+export {
+  createBullet, createBomb, updateProjectile,
+  checkProjectileHit, calculateBombDamage,
+} from './weapons';

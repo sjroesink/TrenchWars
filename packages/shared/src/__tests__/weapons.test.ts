@@ -159,9 +159,11 @@ describe('updateProjectile', () => {
 
   it('bullet hitting wall returns wall_explode (no bouncing)', () => {
     // Place bullet near left wall (x=0 is wall in walled arena)
+    // Position 1.5 is safely clear of wall tile [0,1], but at vx=-12.5 * 0.1 = -1.25
+    // moves to 0.25 which overlaps wall tile [0,1]
     const bullet: ProjectileState = {
       id: 1, ownerId: 'p1', type: 'bullet',
-      x: 1.05, y: 5, vx: -12.5, vy: 0,
+      x: 1.5, y: 5, vx: -12.5, vy: 0,
       level: 0, bouncesRemaining: 0, endTick: 1000,
     };
     const map = makeWalledArena();
@@ -171,9 +173,11 @@ describe('updateProjectile', () => {
   });
 
   it('bomb hitting wall with bounces remaining decrements and continues', () => {
+    // Position 1.5 is safely clear of wall, but vx=-10*0.1=-1.0 moves to 0.5
+    // which overlaps wall tile [0,1]. After bounce restore to 1.5, Y check is clean.
     const bomb: ProjectileState = {
       id: 2, ownerId: 'p1', type: 'bomb',
-      x: 1.05, y: 5, vx: -10, vy: 0,
+      x: 1.5, y: 5, vx: -10, vy: 0,
       level: 0, bouncesRemaining: 3, endTick: 1000,
     };
     const map = makeWalledArena();
@@ -188,7 +192,7 @@ describe('updateProjectile', () => {
   it('bomb hitting wall on last bounce returns wall_explode', () => {
     const bomb: ProjectileState = {
       id: 3, ownerId: 'p1', type: 'bomb',
-      x: 1.05, y: 5, vx: -10, vy: 0,
+      x: 1.5, y: 5, vx: -10, vy: 0,
       level: 0, bouncesRemaining: 1, endTick: 1000,
     };
     const map = makeWalledArena();
