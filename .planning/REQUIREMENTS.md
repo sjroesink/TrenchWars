@@ -19,11 +19,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Combat
 
-- [ ] **CMBT-01**: Player can fire bullets with spacebar that travel in ship's facing direction
-- [ ] **CMBT-02**: Bullets have travel time and speed (not hitscan)
-- [ ] **CMBT-03**: Bullets damage other players on hit and are destroyed
-- [ ] **CMBT-04**: Player can fire bombs that bounce off walls
-- [ ] **CMBT-05**: Bombs deal area damage on impact with a player or after timeout
+- [x] **CMBT-01**: Player can fire bullets with spacebar that travel in ship's facing direction
+- [x] **CMBT-02**: Bullets have travel time and speed (not hitscan)
+- [x] **CMBT-03**: Bullets damage other players on hit and are destroyed
+- [x] **CMBT-04**: Player can fire bombs that bounce off walls
+- [x] **CMBT-05**: Bombs deal area damage on impact with a player or after timeout
 - [ ] **CMBT-06**: Player dies when health reaches zero
 - [ ] **CMBT-07**: Kill and death counts are tracked per player
 - [ ] **CMBT-08**: Player respawns at a random safe location after death
@@ -129,11 +129,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | NETW-03 | Phase 2 | Complete |
 | NETW-04 | Phase 2 | Pending |
 | NETW-05 | Phase 2 | Pending |
-| CMBT-01 | Phase 2 | Pending |
-| CMBT-02 | Phase 2 | Pending |
-| CMBT-03 | Phase 2 | Pending |
-| CMBT-04 | Phase 2 | Pending |
-| CMBT-05 | Phase 2 | Pending |
+| CMBT-01 | Phase 2 | Complete |
+| CMBT-02 | Phase 2 | Complete |
+| CMBT-03 | Phase 2 | Complete |
+| CMBT-04 | Phase 2 | Complete |
+| CMBT-05 | Phase 2 | Complete |
 | CMBT-06 | Phase 2 | Pending |
 | CMBT-07 | Phase 2 | Pending |
 | CMBT-08 | Phase 2 | Pending |
