@@ -43,6 +43,7 @@ export interface GameServerOptions {
   map: TileMap;
   port: number;
   gameMode?: GameMode;
+  httpServer?: import('http').Server;
 }
 
 /**
@@ -54,6 +55,7 @@ export interface GameServerOptions {
 export class GameServer {
   private map: TileMap;
   private port: number;
+  private httpServer?: import('http').Server;
   private tickCount = 0;
   private accumulator = 0n; // BigInt nanoseconds
   private lastTime = 0n;
@@ -72,6 +74,7 @@ export class GameServer {
   constructor(options: GameServerOptions) {
     this.map = options.map;
     this.port = options.port;
+    this.httpServer = options.httpServer;
     this.playerManager = new PlayerManager();
     this.lagCompensation = new LagCompensation();
     this.weaponManager = new WeaponManager(this.lagCompensation);
@@ -82,13 +85,18 @@ export class GameServer {
    * Start the WebSocket server and game loop.
    */
   start(): void {
-    this.wss = new WebSocketServer({ port: this.port });
+    if (this.httpServer) {
+      // Attach WebSocket to existing HTTP server (production: single port)
+      this.wss = new WebSocketServer({ server: this.httpServer });
+      this.httpServer.listen(this.port);
+    } else {
+      // Standalone WebSocket server (development)
+      this.wss = new WebSocketServer({ port: this.port });
+    }
     this.wss.on('connection', (ws) => this.onConnection(ws));
 
     this.lastTime = process.hrtime.bigint();
     this.loopTimer = setInterval(() => this.update(), 1);
-
-    console.log(`TrenchWars server running on ws://localhost:${this.port}`);
   }
 
   /**

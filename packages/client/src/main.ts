@@ -20,7 +20,12 @@ import type { GameModeState, FFAState } from '@trench-wars/shared';
 /** Server WebSocket URL (configurable via query param or default) */
 function getServerUrl(): string {
   const params = new URLSearchParams(window.location.search);
-  return params.get('server') || 'ws://localhost:9020';
+  if (params.get('server')) return params.get('server')!;
+  // Dev mode (Vite on 9010): connect to separate server
+  if (window.location.port === '9010') return 'ws://localhost:9020';
+  // Production: WebSocket on same host as page (wss:// if https://)
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}`;
 }
 
 async function main(): Promise<void> {

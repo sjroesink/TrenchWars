@@ -1,0 +1,11 @@
+services:
+  trenchwars:
+    image: ghcr.io/sjroesink/trenchwars:latest
+    container_name: trenchwars
+    restart: unless-stopped
+    ports:
+      - "9020:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - STATIC_DIR=/app/public

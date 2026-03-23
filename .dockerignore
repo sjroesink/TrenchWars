@@ -1,0 +1,9 @@
+node_modules
+.planning
+.git
+*.md
+packages/client/dist
+packages/server/dist
+packages/shared/dist
+.vite
+deep-research-report.md
