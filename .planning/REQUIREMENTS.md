@@ -14,7 +14,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PHYS-03**: Ship maintains momentum and drifts when not thrusting (inertia)
 - [ ] **PHYS-04**: Ship has configurable drag that gradually slows it over time
 - [ ] **PHYS-05**: Ship bounces off tile walls on collision
-- [ ] **PHYS-06**: Physics parameters match authentic SubSpace feel (rotation speed, thrust, drag coefficients)
+- [x] **PHYS-06**: Physics parameters match authentic SubSpace feel (rotation speed, thrust, drag coefficients)
 - [ ] **PHYS-07**: Ship can activate afterburner for temporary speed boost consuming energy
 
 ### Combat
@@ -119,7 +119,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | PHYS-03 | Phase 1 | Pending |
 | PHYS-04 | Phase 1 | Pending |
 | PHYS-05 | Phase 1 | Pending |
-| PHYS-06 | Phase 1 | Pending |
+| PHYS-06 | Phase 1 | Complete |
 | PHYS-07 | Phase 1 | Pending |
 | MAPS-01 | Phase 1 | Pending |
 | MAPS-02 | Phase 1 | Pending |
