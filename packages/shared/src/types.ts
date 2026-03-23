@@ -73,6 +73,7 @@ export interface ProjectileState {
   vy: number;
   level: number;
   bouncesRemaining: number;
+  rear?: boolean;            // true for rear-firing bullets (Javelin)
   endTick: number;           // tick at which projectile despawns
 }
 
@@ -117,5 +118,6 @@ export interface GameSnapshot {
     vx: number;
     vy: number;
     ownerId: string;
+    rear?: boolean;
   }[];
 }

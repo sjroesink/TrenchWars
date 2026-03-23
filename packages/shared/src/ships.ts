@@ -120,7 +120,7 @@ export const WARBIRD_WEAPONS: WeaponConfig = {
 };
 
 export const JAVELIN_WEAPONS: WeaponConfig = {
-  bulletSpeed: -900 / 10 / 16,     // -5.625 tiles/s (rear gun! fires backward)
+  bulletSpeed: -600 / 10 / 16,     // -3.75 tiles/s (rear gun, slower than forward bullets)
   bombSpeed: 2250 / 10 / 16,       // 14.0625 tiles/s
   bulletFireDelay: 60 / 100,        // 0.60 seconds
   bombFireDelay: 40 / 100,          // 0.40 seconds
@@ -131,7 +131,7 @@ export const JAVELIN_WEAPONS: WeaponConfig = {
   multifireCount: 3,                // Javelin: 3 rear bullets on Ctrl
   multifireEnergy: 450,             // TW: MF-E=450 for Jav
   multifireDelay: 150 / 100,        // 1.50 seconds (TW: MF-D=150)
-  multifireAngle: 0.05,             // small spread between bullets
+  multifireAngle: 0.15,             // wider spread between rear bullets
 };
 
 export const SPIDER_WEAPONS: WeaponConfig = {

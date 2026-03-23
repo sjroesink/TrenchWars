@@ -454,6 +454,7 @@ export class GameServer {
         vx: pr.vx,
         vy: pr.vy,
         ownerId: pr.ownerId,
+        rear: pr.rear,
       })),
     };
 

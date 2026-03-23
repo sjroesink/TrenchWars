@@ -36,6 +36,7 @@ export function createBullet(
     level: 0,
     bouncesRemaining: 0,
     endTick: currentTick + BULLET_ALIVE_TIME,
+    rear: config.bulletSpeed < 0,
   };
 }
 
@@ -57,6 +58,8 @@ export function createMultifire(
   const baseAngle = ship.orientation * 2 * Math.PI;
   const projectiles: ProjectileState[] = [];
 
+  const isRear = config.bulletSpeed < 0;
+
   for (let i = 0; i < count; i++) {
     // Spread bullets symmetrically: -(count-1)/2 to +(count-1)/2
     const offsetIndex = i - (count - 1) / 2;
@@ -64,17 +67,23 @@ export function createMultifire(
     const headingX = Math.cos(angle);
     const headingY = Math.sin(angle);
 
+    // Offset spawn position perpendicular to heading so bullets start spread out
+    const perpX = -Math.sin(angle);
+    const perpY = Math.cos(angle);
+    const spawnOffset = offsetIndex * 0.4; // 0.4 tiles apart at spawn
+
     projectiles.push({
       id: startId + i,
       ownerId,
       type: 'bullet',
-      x: ship.x,
-      y: ship.y,
+      x: ship.x + perpX * spawnOffset,
+      y: ship.y + perpY * spawnOffset,
       vx: ship.vx + headingX * config.bulletSpeed,
       vy: ship.vy + headingY * config.bulletSpeed,
       level: 0,
       bouncesRemaining: 0,
       endTick: currentTick + BULLET_ALIVE_TIME,
+      rear: isRear,
     });
   }
 

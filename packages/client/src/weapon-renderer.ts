@@ -33,9 +33,10 @@ export class WeaponRenderer {
       const screen = camera.worldToScreen(proj.x, proj.y);
 
       if (proj.type === 'bullet') {
-        // Bullets: bright yellow circle (radius 2px)
+        // Rear bullets (Javelin): red, forward bullets: yellow
+        const bulletColor = proj.rear ? 0xff3333 : 0xffff66;
         this.gfx.circle(screen.x, screen.y, 2);
-        this.gfx.fill({ color: 0xffff66 });
+        this.gfx.fill({ color: bulletColor });
       } else {
         // Bombs: deep orange circle (radius 4px)
         this.gfx.circle(screen.x, screen.y, 4);
