@@ -67,12 +67,14 @@ Plans:
   3. Player sees a HUD with health, energy, and kill/death counts while playing
   4. Player can see a radar/minimap showing other players' positions on the map
   5. Game has engine thrust, weapon fire, and explosion sound effects, and ships render with modern neon/glow visual style
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md -- Shared game mode types, protocol extensions, FFA/TeamArena/spectator server implementation
+- [ ] 03-02-PLAN.md -- HUD (energy bar, K/D), kill feed, scoreboard overlays, bomb key remap
+- [ ] 03-03-PLAN.md -- Radar minimap (PixiJS) and text chat system with network relay
+- [ ] 03-04-PLAN.md -- Audio system (Howler.js), neon glow/bloom visual effects (pixi-filters)
+- [ ] 03-05-PLAN.md -- Integration wiring, game-over screen, audio triggers, and full verification
 
 ### Phase 4: Production Launch
 **Goal**: Anyone on the internet can open a URL and immediately start playing with no installation or account required
@@ -90,11 +92,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 7/7 | Complete   | 2026-03-23 |
-| 3. Game Experience | 0/3 | Not started | - |
+| 3. Game Experience | 0/5 | Not started | - |
 | 4. Production Launch | 0/1 | Not started | - |
