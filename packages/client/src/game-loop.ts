@@ -1,5 +1,9 @@
-import type { ShipState, ShipConfig, TileMap, GameSnapshot } from '@trench-wars/shared';
-import { TICK_DT, DEFAULT_BOUNCE_FACTOR, updateShipPhysics, applyWallCollision } from '@trench-wars/shared';
+import type { ShipState, ShipConfig, TileMap, GameSnapshot, ProjectileState, WeaponConfig } from '@trench-wars/shared';
+import {
+  TICK_DT, DEFAULT_BOUNCE_FACTOR, updateShipPhysics, applyWallCollision,
+  createBullet, createBomb, createMultifire, updateProjectile,
+  SHIP_WEAPONS,
+} from '@trench-wars/shared';
 import type { InputManager } from './input';
 import type { Camera } from './camera';
 import type { Renderer } from './renderer';
@@ -40,6 +44,7 @@ export interface GameLoopOptions {
   soundManager?: SoundManager;
   // Callbacks
   onFire?: (type: 'bullet' | 'bomb') => void;
+  shipType?: number;
 }
 
 /**
@@ -79,6 +84,11 @@ export class GameLoop {
   // Thrust state tracking for audio
   private wasThrusting = false;
 
+  // Client-predicted projectiles (spawned immediately on fire, removed when server confirms)
+  private localProjectiles: ProjectileState[] = [];
+  private localProjectileNextId = -1; // negative IDs to distinguish from server IDs
+  private shipType = 0;
+
   // Player score tracking (updated from snapshots)
   kills = 0;
   deaths = 0;
@@ -113,6 +123,7 @@ export class GameLoop {
     this.hud = options.hud ?? null;
     this.soundManager = options.soundManager ?? null;
     this.onFire = options.onFire ?? null;
+    this.shipType = options.shipType ?? 0;
   }
 
   /** Allow external mutation of bounce factor (debug panel). */
@@ -253,6 +264,25 @@ export class GameLoop {
           weapons.multifire,
         );
 
+        // Client-side predicted projectiles: spawn immediately
+        const wc = SHIP_WEAPONS[this.shipType];
+        if (weapons.fire && wc) {
+          const id = this.localProjectileNextId--;
+          const bullet = createBullet(this.shipState, wc, this.playerId || '', id, this.localTick);
+          this.localProjectiles.push(bullet);
+        }
+        if (weapons.fireBomb && wc) {
+          const id = this.localProjectileNextId--;
+          const { projectile } = createBomb(this.shipState, wc, this.playerId || '', id, this.localTick);
+          this.localProjectiles.push(projectile);
+        }
+        if (weapons.multifire && wc && wc.multifireCount > 0) {
+          const startId = this.localProjectileNextId;
+          this.localProjectileNextId -= wc.multifireCount;
+          const bullets = createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick);
+          this.localProjectiles.push(...bullets);
+        }
+
         // Fire audio callbacks
         if (weapons.fire && this.onFire) this.onFire('bullet');
         if (weapons.fireBomb && this.onFire) this.onFire('bomb');
@@ -282,6 +312,19 @@ export class GameLoop {
           this.soundManager.play('bounce');
         }
       }
+
+      // Update local predicted projectiles
+      for (let i = this.localProjectiles.length - 1; i >= 0; i--) {
+        const result = updateProjectile(this.localProjectiles[i], this.tileMap, TICK_DT);
+        if (result === 'wall_explode' || this.localTick >= this.localProjectiles[i].endTick) {
+          this.localProjectiles.splice(i, 1);
+        }
+      }
+      // Expire local projectiles older than 500ms (server should have them by then)
+      const maxLocalAge = 50; // 50 ticks = 500ms
+      this.localProjectiles = this.localProjectiles.filter(
+        (p) => this.localTick - (p.endTick - 800) < maxLocalAge,
+      );
 
       this.localTick++;
       this.accumulator -= TICK_DT;
@@ -316,7 +359,27 @@ export class GameLoop {
           }
         }
       }
-      projectiles = this.interpolation.getProjectiles();
+      const serverProjectiles = this.interpolation.getProjectiles();
+      // Merge local predicted projectiles with server projectiles
+      // Remove local ones that the server now tracks (match by ownerId + proximity)
+      if (serverProjectiles.length > 0 && this.localProjectiles.length > 0) {
+        for (let i = this.localProjectiles.length - 1; i >= 0; i--) {
+          const local = this.localProjectiles[i];
+          const hasServerVersion = serverProjectiles.some(
+            (sp) => sp.ownerId === local.ownerId && sp.type === local.type &&
+              Math.abs(sp.x - local.x) < 3 && Math.abs(sp.y - local.y) < 3,
+          );
+          if (hasServerVersion) {
+            this.localProjectiles.splice(i, 1);
+          }
+        }
+      }
+      // Combine: server projectiles + remaining local predictions
+      const localAsSnapshot = this.localProjectiles.map((p) => ({
+        id: p.id, type: p.type, x: p.x, y: p.y, vx: p.vx, vy: p.vy,
+        ownerId: p.ownerId, rear: p.rear,
+      }));
+      projectiles = [...serverProjectiles, ...localAsSnapshot];
     }
 
     // Spawn exhaust particles while thrusting (forward or reverse)
