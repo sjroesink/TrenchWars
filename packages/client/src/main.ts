@@ -13,7 +13,7 @@ import { ShipSelectOverlay } from './ship-select';
 /** Server WebSocket URL (configurable via query param or default) */
 function getServerUrl(): string {
   const params = new URLSearchParams(window.location.search);
-  return params.get('server') || 'ws://localhost:3001';
+  return params.get('server') || 'ws://localhost:9020';
 }
 
 async function main(): Promise<void> {
