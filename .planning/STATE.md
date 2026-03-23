@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-23T07:04:30.928Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-23T07:13:58Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,15 +24,15 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 ## Current Position
 
 Phase: 01 (ship-physics-and-arena) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 2
+- Average duration: ~6min
+- Total execution time: ~0.2 hours
 
 **By Phase:**
 
@@ -47,6 +47,7 @@ Plan: 2 of 3
 
 *Updated after each plan completion*
 | Phase 01 P01 | 4min | 2 tasks | 15 files |
+| Phase 01 P02 | 7min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - Roadmap: Coarse granularity, 4 phases derived from 43 v1 requirements
 - Research: Ship physics feel is the highest priority -- validate before networking
 - [Phase 01]: Used convertShip() to centralize SVS unit conversion with raw values preserved
+- [Phase 01 P02]: Zero drag confirmed -- velocity unchanged with no input (SubSpace defining characteristic)
+- [Phase 01 P02]: Speed clamp uses Truncate (hard cap), not drag reduction
+- [Phase 01 P02]: Axis-separated collision (X then Y) matching SubSpace order
 
 ### Pending Todos
 
@@ -69,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T07:04:30.926Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-23T07:13:58Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

@@ -9,13 +9,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ship Physics
 
-- [ ] **PHYS-01**: Ship rotates left/right with arrow keys at configurable rotation speed
-- [ ] **PHYS-02**: Ship thrusts forward with up arrow, applying force in facing direction
-- [ ] **PHYS-03**: Ship maintains momentum and drifts when not thrusting (inertia)
-- [ ] **PHYS-04**: Ship has configurable drag that gradually slows it over time
-- [ ] **PHYS-05**: Ship bounces off tile walls on collision
+- [x] **PHYS-01**: Ship rotates left/right with arrow keys at configurable rotation speed
+- [x] **PHYS-02**: Ship thrusts forward with up arrow, applying force in facing direction
+- [x] **PHYS-03**: Ship maintains momentum and drifts when not thrusting (inertia)
+- [x] **PHYS-04**: Ship has configurable drag that gradually slows it over time
+- [x] **PHYS-05**: Ship bounces off tile walls on collision
 - [x] **PHYS-06**: Physics parameters match authentic SubSpace feel (rotation speed, thrust, drag coefficients)
-- [ ] **PHYS-07**: Ship can activate afterburner for temporary speed boost consuming energy
+- [x] **PHYS-07**: Ship can activate afterburner for temporary speed boost consuming energy
 
 ### Combat
 
@@ -53,9 +53,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Maps
 
-- [ ] **MAPS-01**: Tile-based map system with walls and open space
+- [x] **MAPS-01**: Tile-based map system with walls and open space
 - [ ] **MAPS-02**: At least one playable arena map designed for 10-20 players
-- [ ] **MAPS-03**: Map data loads from a defined format (tilemap)
+- [x] **MAPS-03**: Map data loads from a defined format (tilemap)
 
 ### UI & Experience
 
@@ -114,16 +114,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PHYS-01 | Phase 1 | Pending |
-| PHYS-02 | Phase 1 | Pending |
-| PHYS-03 | Phase 1 | Pending |
-| PHYS-04 | Phase 1 | Pending |
-| PHYS-05 | Phase 1 | Pending |
+| PHYS-01 | Phase 1 | Complete |
+| PHYS-02 | Phase 1 | Complete |
+| PHYS-03 | Phase 1 | Complete |
+| PHYS-04 | Phase 1 | Complete |
+| PHYS-05 | Phase 1 | Complete |
 | PHYS-06 | Phase 1 | Complete |
-| PHYS-07 | Phase 1 | Pending |
-| MAPS-01 | Phase 1 | Pending |
+| PHYS-07 | Phase 1 | Complete |
+| MAPS-01 | Phase 1 | Complete |
 | MAPS-02 | Phase 1 | Pending |
-| MAPS-03 | Phase 1 | Pending |
+| MAPS-03 | Phase 1 | Complete |
 | NETW-01 | Phase 2 | Pending |
 | NETW-02 | Phase 2 | Pending |
 | NETW-03 | Phase 2 | Pending |
