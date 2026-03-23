@@ -54,7 +54,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Maps
 
 - [x] **MAPS-01**: Tile-based map system with walls and open space
-- [ ] **MAPS-02**: At least one playable arena map designed for 10-20 players
+- [x] **MAPS-02**: At least one playable arena map designed for 10-20 players
 - [x] **MAPS-03**: Map data loads from a defined format (tilemap)
 
 ### UI & Experience
@@ -122,7 +122,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | PHYS-06 | Phase 1 | Complete |
 | PHYS-07 | Phase 1 | Complete |
 | MAPS-01 | Phase 1 | Complete |
-| MAPS-02 | Phase 1 | Pending |
+| MAPS-02 | Phase 1 | Complete |
 | MAPS-03 | Phase 1 | Complete |
 | NETW-01 | Phase 2 | Pending |
 | NETW-02 | Phase 2 | Pending |

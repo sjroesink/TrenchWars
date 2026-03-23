@@ -12,7 +12,7 @@ TrenchWars goes from zero to a publicly playable browser space combat game in fo
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Ship Physics and Arena** - Momentum-based ship movement and tile-based arena with wall collision, playable as a single-player physics sandbox
+- [x] **Phase 1: Ship Physics and Arena** - Momentum-based ship movement and tile-based arena with wall collision, playable as a single-player physics sandbox (completed 2026-03-23)
 - [ ] **Phase 2: Multiplayer Combat** - Authoritative server, client prediction, weapons, ship types, and real-time combat between multiple players
 - [ ] **Phase 3: Game Experience** - Game modes, HUD, scoreboard, radar, audio, visual polish, chat, and ship selection flow
 - [ ] **Phase 4: Production Launch** - Public hosting, performance at scale, and multi-arena support
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Ship Physics and Arena | 2/3 | In Progress|  |
+| 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 0/3 | Not started | - |
 | 3. Game Experience | 0/3 | Not started | - |
 | 4. Production Launch | 0/1 | Not started | - |
