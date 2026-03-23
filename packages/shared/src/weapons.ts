@@ -60,6 +60,16 @@ export function createMultifire(
 
   const isRear = config.bulletSpeed < 0;
 
+  // Ship heading vector
+  const fwdX = Math.cos(baseAngle);
+  const fwdY = Math.sin(baseAngle);
+  // Perpendicular to heading (for lateral spread)
+  const perpX = -fwdY;
+  const perpY = fwdX;
+
+  // Spawn behind the ship for rear bullets, in front for forward
+  const spawnAlongHeading = isRear ? -1.2 : 1.2; // 1.2 tiles behind/ahead of ship center
+
   for (let i = 0; i < count; i++) {
     // Spread bullets symmetrically: -(count-1)/2 to +(count-1)/2
     const offsetIndex = i - (count - 1) / 2;
@@ -67,19 +77,20 @@ export function createMultifire(
     const headingX = Math.cos(angle);
     const headingY = Math.sin(angle);
 
-    // Offset spawn position perpendicular to heading so bullets start spread out
-    const perpX = -Math.sin(angle);
-    const perpY = Math.cos(angle);
-    const spawnOffset = offsetIndex * 0.4; // 0.4 tiles apart at spawn
+    // Lateral spawn offset: 0.8 tiles apart
+    const lateralOffset = offsetIndex * 0.8;
+
+    // Perpendicular velocity component so bullets diverge faster
+    const spreadSpeed = offsetIndex * 1.5; // 1.5 tiles/s outward per bullet
 
     projectiles.push({
       id: startId + i,
       ownerId,
       type: 'bullet',
-      x: ship.x + perpX * spawnOffset,
-      y: ship.y + perpY * spawnOffset,
-      vx: ship.vx + headingX * config.bulletSpeed,
-      vy: ship.vy + headingY * config.bulletSpeed,
+      x: ship.x + fwdX * spawnAlongHeading + perpX * lateralOffset,
+      y: ship.y + fwdY * spawnAlongHeading + perpY * lateralOffset,
+      vx: ship.vx + headingX * config.bulletSpeed + perpX * spreadSpeed,
+      vy: ship.vy + headingY * config.bulletSpeed + perpY * spreadSpeed,
       level: 0,
       bouncesRemaining: 0,
       endTick: currentTick + BULLET_ALIVE_TIME,

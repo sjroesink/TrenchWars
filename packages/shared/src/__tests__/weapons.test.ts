@@ -38,6 +38,10 @@ function makeWeaponConfig(overrides: Partial<WeaponConfig> = {}): WeaponConfig {
     bombFireEnergy: 200,
     bombBounceCount: 3,
     bombThrust: 5,
+    multifireCount: 0,
+    multifireEnergy: 0,
+    multifireDelay: 0,
+    multifireAngle: 0,
     ...overrides,
   };
 }

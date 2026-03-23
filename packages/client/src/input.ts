@@ -28,7 +28,7 @@ export class InputManager {
         this.firePressed = true;
         e.preventDefault();
       }
-      if (e.code === 'KeyF' && !e.repeat) {
+      if ((e.code === 'Tab' || e.code === 'KeyF') && !e.repeat) {
         this.fireBombPressed = true;
         e.preventDefault();
       }
@@ -37,8 +37,8 @@ export class InputManager {
         e.preventDefault();
       }
 
-      // Tab key for scoreboard toggle
-      if (e.code === 'Tab') {
+      // ~ (Backquote) key for scoreboard toggle
+      if (e.code === 'Backquote') {
         this.scoreboardHeld = true;
         e.preventDefault();
       }
@@ -56,7 +56,7 @@ export class InputManager {
     window.addEventListener('keyup', (e) => {
       this.keys.set(e.code, false);
 
-      if (e.code === 'Tab') {
+      if (e.code === 'Backquote') {
         this.scoreboardHeld = false;
       }
     });
