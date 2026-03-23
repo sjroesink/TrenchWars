@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 status: unknown
 stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-23T09:35:38.000Z"
+last_updated: "2026-03-23T09:41:24.410Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 10
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,13 +24,13 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 ## Current Position
 
 Phase: 02 (multiplayer-combat) — EXECUTING
-Plan: 2 of 7
+Plan: 5 of 7
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: ~7min
 - Total execution time: ~0.45 hours
 
@@ -50,6 +50,7 @@ Plan: 2 of 7
 | Phase 01 P02 | 7min | 2 tasks | 8 files |
 | Phase 01 P03 | 15min | 2 tasks | 9 files |
 | Phase 02 P01 | 3min | 2 tasks | 10 files |
+| Phase 02 P04 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01 P03]: Human-verified ship movement feels like SubSpace -- rotation, thrust, momentum, bounce all correct
 - [Phase 02 P01]: Weapon configs kept separate from ShipConfig (SHIP_WEAPONS array) to avoid breaking Phase 1 code
 - [Phase 02 P01]: Protocol uses hex numeric enums (0x01, 0x02) for future binary encoding
+- [Phase 02 P04]: Local-only fallback: client catches WebSocket error and runs without server for testing
+- [Phase 02 P04]: Server URL configurable via ?server= query param, defaults to ws://localhost:3001
+- [Phase 02 P04]: Fire inputs use edge detection (consume on poll) to prevent auto-fire while held
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:35:38.000Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-23T09:41:00.000Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None

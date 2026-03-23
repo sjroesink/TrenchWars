@@ -40,8 +40,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Networking
 
 - [x] **NETW-01**: Authoritative server validates all game state (positions, hits, damage)
-- [ ] **NETW-02**: Client-side prediction provides responsive local controls despite latency
-- [ ] **NETW-03**: Server reconciliation corrects client predictions when they diverge
+- [x] **NETW-02**: Client-side prediction provides responsive local controls despite latency
+- [x] **NETW-03**: Server reconciliation corrects client predictions when they diverge
 - [ ] **NETW-04**: Entity interpolation renders remote players smoothly between server updates
 - [ ] **NETW-05**: Player can reconnect to an active session after disconnect
 
@@ -125,8 +125,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | MAPS-02 | Phase 1 | Complete |
 | MAPS-03 | Phase 1 | Complete |
 | NETW-01 | Phase 2 | Complete |
-| NETW-02 | Phase 2 | Pending |
-| NETW-03 | Phase 2 | Pending |
+| NETW-02 | Phase 2 | Complete |
+| NETW-03 | Phase 2 | Complete |
 | NETW-04 | Phase 2 | Pending |
 | NETW-05 | Phase 2 | Pending |
 | CMBT-01 | Phase 2 | Pending |
