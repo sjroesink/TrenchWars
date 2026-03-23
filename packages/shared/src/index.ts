@@ -8,6 +8,12 @@ export {
   EXACT_DAMAGE, ENTER_DELAY, SNAPSHOT_RATE, RECONNECT_TIMEOUT,
 } from './constants';
 export { WARBIRD, JAVELIN, SPIDER } from './ships';
+export {
+  WARBIRD_WEAPONS, JAVELIN_WEAPONS, SPIDER_WEAPONS,
+  SHIP_WEAPONS, SHIP_CONFIGS,
+} from './ships';
+export { ClientMsg, ServerMsg } from './protocol';
+export type { NetworkMessage } from './protocol';
 export { applyRotation, applyThrust, clampSpeed, updateEnergy, updateShipPhysics } from './physics';
 export { isWallAt, isCollidingWithWalls, simulateAxis, applyWallCollision } from './collision';
 export { parseMap, generateTestArena } from './map';

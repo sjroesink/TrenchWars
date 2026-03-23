@@ -1,4 +1,4 @@
-import type { ShipConfig } from './types';
+import type { ShipConfig, WeaponConfig } from './types';
 
 interface RawShipValues {
   name: string;
@@ -98,3 +98,43 @@ export const SPIDER: ShipConfig = convertShip({
   rawMaxEnergy: 1700,
   rawAfterburnerEnergy: 1200,
 });
+
+// Per-ship weapon configurations (SVS defaults from research)
+export const WARBIRD_WEAPONS: WeaponConfig = {
+  bulletSpeed: 2000 / 10 / 16,     // 12.5 tiles/s
+  bombSpeed: 2000 / 10 / 16,       // 12.5 tiles/s
+  bulletFireDelay: 25 / 100,        // 0.25 seconds
+  bombFireDelay: 50 / 100,          // 0.50 seconds
+  bulletFireEnergy: 80,
+  bombFireEnergy: 300,
+  bombBounceCount: 0,               // Warbird: no bomb bounces (gun-focused)
+  bombThrust: 36 / 100 * 10 / 16,  // 0.225 tiles/s recoil
+};
+
+export const JAVELIN_WEAPONS: WeaponConfig = {
+  bulletSpeed: 2000 / 10 / 16,
+  bombSpeed: 2000 / 10 / 16,
+  bulletFireDelay: 30 / 100,        // 0.30 seconds (slower bullets)
+  bombFireDelay: 40 / 100,          // 0.40 seconds (faster bombs)
+  bulletFireEnergy: 100,
+  bombFireEnergy: 250,
+  bombBounceCount: 3,               // Javelin: high bomb bounces
+  bombThrust: 36 / 100 * 10 / 16,
+};
+
+export const SPIDER_WEAPONS: WeaponConfig = {
+  bulletSpeed: 2000 / 10 / 16,
+  bombSpeed: 2000 / 10 / 16,
+  bulletFireDelay: 20 / 100,        // 0.20 seconds (fastest bullets)
+  bombFireDelay: 50 / 100,          // 0.50 seconds
+  bulletFireEnergy: 60,
+  bombFireEnergy: 300,
+  bombBounceCount: 2,               // Spider: medium bomb bounces
+  bombThrust: 36 / 100 * 10 / 16,
+};
+
+// Indexed by ship type number (0=Warbird, 1=Javelin, 2=Spider)
+export const SHIP_WEAPONS: WeaponConfig[] = [WARBIRD_WEAPONS, JAVELIN_WEAPONS, SPIDER_WEAPONS];
+
+// Ship configs indexed by type number
+export const SHIP_CONFIGS: ShipConfig[] = [WARBIRD, JAVELIN, SPIDER];
