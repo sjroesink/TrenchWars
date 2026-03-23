@@ -49,6 +49,7 @@ export class InputManager {
       left: this.keys.get('ArrowLeft') ?? false,
       right: this.keys.get('ArrowRight') ?? false,
       thrust: this.keys.get('ArrowUp') ?? false,
+      reverse: this.keys.get('ArrowDown') ?? false,
       afterburner: this.keys.get('ShiftLeft') ?? this.keys.get('ShiftRight') ?? false,
     };
   }

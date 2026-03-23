@@ -35,15 +35,16 @@ export function applyThrust(
   config: ShipConfig,
   dt: number,
 ): void {
-  if (!input.thrust) {
+  if (!input.thrust && !input.reverse) {
     return;
   }
 
   const thrustValue =
     input.afterburner && state.energy > 0 ? config.maxThrust : config.thrust;
   const angle = state.orientation * Math.PI * 2;
-  state.vx += Math.cos(angle) * thrustValue * dt;
-  state.vy += Math.sin(angle) * thrustValue * dt;
+  const direction = input.reverse ? -1 : 1;
+  state.vx += Math.cos(angle) * thrustValue * dt * direction;
+  state.vy += Math.sin(angle) * thrustValue * dt * direction;
 }
 
 /**

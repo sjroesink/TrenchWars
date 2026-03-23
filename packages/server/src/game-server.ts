@@ -25,6 +25,7 @@ const NEUTRAL_INPUT: ShipInput = {
   left: false,
   right: false,
   thrust: false,
+  reverse: false,
   afterburner: false,
 };
 

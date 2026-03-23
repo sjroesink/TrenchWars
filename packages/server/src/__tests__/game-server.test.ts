@@ -66,7 +66,7 @@ describe('GameServer', () => {
       player.ship.orientation = 0; // facing east
 
       // Apply thrust manually to verify shared physics is used
-      const input: ShipInput = { left: false, right: false, thrust: true, afterburner: false };
+      const input: ShipInput = { left: false, right: false, thrust: true, reverse: false, afterburner: false };
       const config = SHIP_CONFIGS[0];
       const prevVx = player.ship.vx;
 

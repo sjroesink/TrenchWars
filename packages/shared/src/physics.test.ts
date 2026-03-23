@@ -21,6 +21,7 @@ function makeInput(overrides?: Partial<ShipInput>): ShipInput {
     left: false,
     right: false,
     thrust: false,
+    reverse: false,
     afterburner: false,
     ...overrides,
   };

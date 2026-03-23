@@ -11,6 +11,7 @@ export interface ShipInput {
   left: boolean;
   right: boolean;
   thrust: boolean;
+  reverse: boolean;
   afterburner: boolean;
 }
 
