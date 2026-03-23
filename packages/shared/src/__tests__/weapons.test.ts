@@ -189,16 +189,24 @@ describe('updateProjectile', () => {
     expect(bomb.vx).toBeGreaterThan(0);
   });
 
-  it('bomb hitting wall on last bounce returns wall_explode', () => {
+  it('bomb with 1 bounce remaining survives first hit, explodes on second', () => {
     const bomb: ProjectileState = {
       id: 3, ownerId: 'p1', type: 'bomb',
       x: 1.5, y: 5, vx: -10, vy: 0,
       level: 0, bouncesRemaining: 1, endTick: 1000,
     };
     const map = makeWalledArena();
-    const result = updateProjectile(bomb, map, 0.1);
+    // First wall hit: bounces (bouncesRemaining 1 -> 0)
+    const result1 = updateProjectile(bomb, map, 0.1);
+    expect(result1).toBe('active');
+    expect(bomb.bouncesRemaining).toBe(0);
 
-    expect(result).toBe('wall_explode');
+    // Reset position toward wall for second hit
+    bomb.x = 1.5;
+    bomb.vx = -10;
+    // Second wall hit: explodes (bouncesRemaining is 0)
+    const result2 = updateProjectile(bomb, map, 0.1);
+    expect(result2).toBe('wall_explode');
   });
 });
 

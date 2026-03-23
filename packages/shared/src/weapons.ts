@@ -94,11 +94,11 @@ export function updateProjectile(
     if (proj.type === 'bullet') {
       return 'wall_explode';
     }
-    // Bomb: decrement bounces
-    proj.bouncesRemaining--;
+    // Bomb: check bounces remaining before decrementing
     if (proj.bouncesRemaining <= 0) {
       return 'wall_explode';
     }
+    proj.bouncesRemaining--;
   }
 
   // Move Y axis
@@ -112,10 +112,10 @@ export function updateProjectile(
     if (proj.type === 'bullet') {
       return 'wall_explode';
     }
-    proj.bouncesRemaining--;
     if (proj.bouncesRemaining <= 0) {
       return 'wall_explode';
     }
+    proj.bouncesRemaining--;
   }
 
   return 'active';
