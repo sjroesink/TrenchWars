@@ -8,7 +8,7 @@ import type { Camera } from './camera';
  * from the local player's green ship.
  */
 export class RemotePlayerRenderer {
-  private container: Container;
+  readonly container: Container;
   private pool: Graphics[] = [];
   private activeCount = 0;
 

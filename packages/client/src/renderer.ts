@@ -1,19 +1,24 @@
 import { Application, Graphics, Container } from 'pixi.js';
+import { GlowFilter } from 'pixi-filters/glow';
+import { AdvancedBloomFilter } from 'pixi-filters/advanced-bloom';
 import type { ShipState, TileMap, GameSnapshot } from '@trench-wars/shared';
 import { TILE_SIZE } from '@trench-wars/shared';
 import type { Camera } from './camera';
 import type { InterpolatedEntity } from './interpolation';
 import { WeaponRenderer } from './weapon-renderer';
 import { RemotePlayerRenderer } from './remote-player';
+import { VisualEffects } from './visual-effects';
 
 export class Renderer {
   readonly app: Application;
   private shipGraphics!: Graphics;
+  private shipContainer!: Container;
   private wallGraphics!: Graphics;
   private tilemapContainer!: Container;
   private mapData!: TileMap;
   private weaponRenderer!: WeaponRenderer;
   private remotePlayerRenderer!: RemotePlayerRenderer;
+  private visualEffects!: VisualEffects;
 
   constructor() {
     this.app = new Application();
@@ -31,7 +36,7 @@ export class Renderer {
 
     document.getElementById('game')!.appendChild(this.app.canvas);
 
-    // Container for all wall tiles — positioned by camera offset
+    // Container for all wall tiles -- positioned by camera offset
     this.tilemapContainer = new Container();
     this.app.stage.addChild(this.tilemapContainer);
 
@@ -42,19 +47,74 @@ export class Renderer {
     // Remote players layer (behind projectiles and local ship)
     this.remotePlayerRenderer = new RemotePlayerRenderer(this.app.stage);
 
+    // Apply glow filter to remote player container (red glow)
+    const remoteGlow = new GlowFilter({
+      distance: 10,
+      outerStrength: 2,
+      innerStrength: 0,
+      color: 0xff4444,
+      quality: 0.3,
+    });
+    this.remotePlayerRenderer.container.filters = [remoteGlow];
+
     // Weapon/projectile layer (above remote players, below local ship)
     this.weaponRenderer = new WeaponRenderer(this.app.stage);
 
-    // Ship sprite: arrow pointing right = orientation 0 = east (on top)
+    // Apply glow filter to weapon container (yellow glow for projectiles)
+    const weaponGlow = new GlowFilter({
+      distance: 8,
+      outerStrength: 3,
+      innerStrength: 0,
+      color: 0xffff66,
+      quality: 0.3,
+    });
+    this.weaponRenderer.container.filters = [weaponGlow];
+
+    // Visual effects layer (exhaust particles and enhanced explosions)
+    this.visualEffects = new VisualEffects(this.app.stage);
+
+    // Ship sprite in its own container for glow filter
+    this.shipContainer = new Container();
     this.shipGraphics = new Graphics();
     this.shipGraphics.poly([-8, -6, 12, 0, -8, 6]);
     this.shipGraphics.fill({ color: 0x00ff88 });
-    this.app.stage.addChild(this.shipGraphics);
+    this.shipContainer.addChild(this.shipGraphics);
+    this.app.stage.addChild(this.shipContainer);
+
+    // Apply glow filter to local ship container (green glow)
+    const shipGlow = new GlowFilter({
+      distance: 10,
+      outerStrength: 2,
+      innerStrength: 0,
+      color: 0x00ff88,
+      quality: 0.3,
+    });
+    this.shipContainer.filters = [shipGlow];
+
+    // Global bloom filter for neon aesthetic
+    const bloom = new AdvancedBloomFilter({
+      threshold: 0.4,
+      bloomScale: 0.8,
+      brightness: 1.1,
+      blur: 4,
+      quality: 4,
+    });
+    this.app.stage.filters = [bloom];
   }
 
-  /** Trigger an explosion effect at a world position */
-  addExplosion(x: number, y: number): void {
-    this.weaponRenderer.addExplosion(x, y);
+  /** Trigger an enhanced explosion effect at a world position */
+  addExplosion(x: number, y: number, large = false): void {
+    this.visualEffects.addExplosion(x, y, large);
+  }
+
+  /** Spawn an engine exhaust particle behind the ship */
+  spawnExhaust(shipX: number, shipY: number, orientation: number): void {
+    this.visualEffects.spawnExhaust(shipX, shipY, orientation);
+  }
+
+  /** Render visual effects (exhaust particles, explosions) */
+  renderEffects(camera: Camera): void {
+    this.visualEffects.render(camera);
   }
 
   render(
@@ -106,10 +166,13 @@ export class Renderer {
       this.weaponRenderer.render(projectiles, camera);
     }
 
+    // Visual effects (exhaust particles, enhanced explosions)
+    this.visualEffects.render(camera);
+
     // Ship sprite (local player -- rendered on top)
     const shipScreen = camera.worldToScreen(state.x, state.y);
-    this.shipGraphics.x = shipScreen.x;
-    this.shipGraphics.y = shipScreen.y;
+    this.shipContainer.x = shipScreen.x;
+    this.shipContainer.y = shipScreen.y;
     this.shipGraphics.rotation = state.orientation * Math.PI * 2;
   }
 }

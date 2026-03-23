@@ -10,12 +10,15 @@ interface Explosion {
 }
 
 export class WeaponRenderer {
+  readonly container: Container;
   private gfx: Graphics;
   private explosions: Explosion[] = [];
 
   constructor(parent: Container) {
+    this.container = new Container();
     this.gfx = new Graphics();
-    parent.addChild(this.gfx);
+    this.container.addChild(this.gfx);
+    parent.addChild(this.container);
   }
 
   /** Render all projectiles and active explosions */
@@ -30,13 +33,13 @@ export class WeaponRenderer {
       const screen = camera.worldToScreen(proj.x, proj.y);
 
       if (proj.type === 'bullet') {
-        // Bullets: small yellow circle (radius 2px)
+        // Bullets: bright yellow circle (radius 2px)
         this.gfx.circle(screen.x, screen.y, 2);
-        this.gfx.fill({ color: 0xffff00 });
+        this.gfx.fill({ color: 0xffff66 });
       } else {
-        // Bombs: larger red circle (radius 4px)
+        // Bombs: deep orange circle (radius 4px)
         this.gfx.circle(screen.x, screen.y, 4);
-        this.gfx.fill({ color: 0xff3333 });
+        this.gfx.fill({ color: 0xff6600 });
       }
     }
 
@@ -70,6 +73,6 @@ export class WeaponRenderer {
   }
 
   destroy(): void {
-    this.gfx.destroy();
+    this.container.destroy();
   }
 }
