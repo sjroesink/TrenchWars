@@ -47,9 +47,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Game Modes
 
-- [ ] **MODE-01**: Free-for-all deathmatch: all players fight, kills tracked on scoreboard
-- [ ] **MODE-02**: Team arena: 2 teams compete in elimination rounds
-- [ ] **MODE-03**: Players can spectate an active arena without participating
+- [x] **MODE-01**: Free-for-all deathmatch: all players fight, kills tracked on scoreboard
+- [x] **MODE-02**: Team arena: 2 teams compete in elimination rounds
+- [x] **MODE-03**: Players can spectate an active arena without participating
 
 ### Maps
 
@@ -66,7 +66,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **UIEX-05**: Text chat between players in the same arena
 - [x] **UIEX-06**: Audio effects for engine thrust, weapon fire, and explosions
 - [x] **UIEX-07**: Modern 2D visual style with vector graphics and glow/neon effects
-- [ ] **UIEX-08**: No account or registration required to start playing
+- [x] **UIEX-08**: No account or registration required to start playing
 
 ### Infrastructure
 
@@ -143,9 +143,9 @@ Requirements for initial release. Each maps to roadmap phases.
 | SHIP-03 | Phase 2 | Complete |
 | SHIP-04 | Phase 2 | Complete |
 | SHIP-05 | Phase 2 | Complete |
-| MODE-01 | Phase 3 | Pending |
-| MODE-02 | Phase 3 | Pending |
-| MODE-03 | Phase 3 | Pending |
+| MODE-01 | Phase 3 | Complete |
+| MODE-02 | Phase 3 | Complete |
+| MODE-03 | Phase 3 | Complete |
 | UIEX-01 | Phase 3 | Pending |
 | UIEX-02 | Phase 3 | Pending |
 | UIEX-03 | Phase 3 | Pending |
@@ -153,7 +153,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | UIEX-05 | Phase 3 | Pending |
 | UIEX-06 | Phase 3 | Complete |
 | UIEX-07 | Phase 3 | Complete |
-| UIEX-08 | Phase 3 | Pending |
+| UIEX-08 | Phase 3 | Complete |
 | INFR-01 | Phase 4 | Pending |
 | INFR-02 | Phase 4 | Pending |
 | INFR-03 | Phase 4 | Pending |
