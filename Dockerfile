@@ -21,15 +21,16 @@ RUN npx vite build --config packages/client/vite.config.ts --outDir dist
 # Stage 2: Production image
 FROM node:22-alpine
 
-RUN apk add --no-cache tsx
-
 WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/server/package.json packages/server/
 
-RUN npm ci --omit=dev 2>/dev/null || npm ci
+RUN npm ci
+
+# Install tsx globally for running TypeScript
+RUN npm install -g tsx
 
 # Shared source (consumed via workspace)
 COPY packages/shared/ packages/shared/
