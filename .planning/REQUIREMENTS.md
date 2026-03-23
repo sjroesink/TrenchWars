@@ -31,15 +31,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ships
 
-- [ ] **SHIP-01**: Warbird is available — fast, agile fighter with standard bullets
-- [ ] **SHIP-02**: Javelin is available — slower, powerful bombs, higher damage
-- [ ] **SHIP-03**: Spider is available — medium speed, mines-ready platform (bombs for v1)
-- [ ] **SHIP-04**: Each ship type has distinct stats (speed, rotation, health, energy, fire rate)
+- [x] **SHIP-01**: Warbird is available — fast, agile fighter with standard bullets
+- [x] **SHIP-02**: Javelin is available — slower, powerful bombs, higher damage
+- [x] **SHIP-03**: Spider is available — medium speed, mines-ready platform (bombs for v1)
+- [x] **SHIP-04**: Each ship type has distinct stats (speed, rotation, health, energy, fire rate)
 - [ ] **SHIP-05**: Player can select ship type before entering the arena
 
 ### Networking
 
-- [ ] **NETW-01**: Authoritative server validates all game state (positions, hits, damage)
+- [x] **NETW-01**: Authoritative server validates all game state (positions, hits, damage)
 - [ ] **NETW-02**: Client-side prediction provides responsive local controls despite latency
 - [ ] **NETW-03**: Server reconciliation corrects client predictions when they diverge
 - [ ] **NETW-04**: Entity interpolation renders remote players smoothly between server updates
@@ -124,7 +124,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | MAPS-01 | Phase 1 | Complete |
 | MAPS-02 | Phase 1 | Complete |
 | MAPS-03 | Phase 1 | Complete |
-| NETW-01 | Phase 2 | Pending |
+| NETW-01 | Phase 2 | Complete |
 | NETW-02 | Phase 2 | Pending |
 | NETW-03 | Phase 2 | Pending |
 | NETW-04 | Phase 2 | Pending |
@@ -138,10 +138,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | CMBT-07 | Phase 2 | Pending |
 | CMBT-08 | Phase 2 | Pending |
 | CMBT-09 | Phase 2 | Pending |
-| SHIP-01 | Phase 2 | Pending |
-| SHIP-02 | Phase 2 | Pending |
-| SHIP-03 | Phase 2 | Pending |
-| SHIP-04 | Phase 2 | Pending |
+| SHIP-01 | Phase 2 | Complete |
+| SHIP-02 | Phase 2 | Complete |
+| SHIP-03 | Phase 2 | Complete |
+| SHIP-04 | Phase 2 | Complete |
 | SHIP-05 | Phase 2 | Pending |
 | MODE-01 | Phase 3 | Pending |
 | MODE-02 | Phase 3 | Pending |
