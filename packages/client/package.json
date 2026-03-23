@@ -4,7 +4,6 @@
   "type": "module",
   "dependencies": {
     "pixi.js": "^8.17.1",
-    "@pixi/tilemap": "^5.0.2",
     "@trench-wars/shared": "*"
   },
   "devDependencies": {

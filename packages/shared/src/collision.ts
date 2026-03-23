@@ -71,6 +71,7 @@ export function simulateAxis(
   bounceFactor: number,
 ): boolean {
   const velKey = axis === 'x' ? 'vx' : 'vy';
+  const perpVelKey = axis === 'x' ? 'vy' : 'vx';
   const prevPos = state[axis];
 
   // Move on this axis
@@ -78,9 +79,10 @@ export function simulateAxis(
 
   // Check collision at new position
   if (isCollidingWithWalls(state.x, state.y, radius, map)) {
-    // Restore position and bounce
+    // Restore position, reverse moving axis, dampen perpendicular axis (nullspace behavior)
     state[axis] = prevPos;
     state[velKey] *= -bounceFactor;
+    state[perpVelKey] *= bounceFactor;
     return true;
   }
 

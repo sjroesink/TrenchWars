@@ -114,10 +114,11 @@ describe('simulateAxis', () => {
 
   it('applies bounce factor to velocity', () => {
     const map = makeTestMap();
-    const state = makeState({ x: 8.2, y: 3.5, vx: 20 });
+    const state = makeState({ x: 8.2, y: 3.5, vx: 20, vy: 10 });
     const bounceFactor = 0.5;
     simulateAxis(state, 0.01, 'x', map, 0.875, bounceFactor);
     expect(state.vx).toBeCloseTo(-10, 1); // 20 * -0.5 = -10
+    expect(state.vy).toBeCloseTo(5, 1); // 10 * 0.5 = 5 (perpendicular dampening)
   });
 });
 

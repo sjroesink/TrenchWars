@@ -38,8 +38,9 @@ export class DebugPanel {
     this.gui.add(selector, 'ship', Object.keys(SHIP_PRESETS)).name('Ship').onChange((name: string) => {
       const preset = SHIP_PRESETS[name];
       if (preset) {
-        // Copy all preset values into the mutable config
         Object.assign(this.shipConfig, preset);
+        // Refresh all GUI controllers to reflect new config values
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
       }
     });
 
