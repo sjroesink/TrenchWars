@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-03-23T09:55:40.896Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-03-23T09:57:03.500Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -54,6 +54,7 @@ Plan: 7 of 7
 | Phase 02 P02 | 4min | 2 tasks | 3 files |
 | Phase 02 P03 | 4min | 2 tasks | 6 files |
 | Phase 02 P06 | 3min | 2 tasks | 5 files |
+| Phase 02 P05 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 02 P03]: Neutral input applied to idle players each tick for consistent speed clamping
 - [Phase 02]: 100ms interpolation delay for smooth remote rendering at 60fps from 20Hz snapshots
 - [Phase 02]: Graphics object pooling for remote player rendering to avoid GC pressure
+- [Phase 02]: LagCompensation uses linear array scanned newest-first for 200-tick rewind
+- [Phase 02]: Projectile creation ticks in separate Map, not modifying ProjectileState type
+- [Phase 02]: Graceful fallback to current positions when lag compensation history unavailable
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:55:40.894Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-03-23T09:57:03.498Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

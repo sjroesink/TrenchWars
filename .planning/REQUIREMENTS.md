@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CMBT-06**: Player dies when health reaches zero
 - [x] **CMBT-07**: Kill and death counts are tracked per player
 - [x] **CMBT-08**: Player respawns at a random safe location after death
-- [ ] **CMBT-09**: Server performs lag-compensated hit detection for fair combat
+- [x] **CMBT-09**: Server performs lag-compensated hit detection for fair combat
 
 ### Ships
 
@@ -137,7 +137,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | CMBT-06 | Phase 2 | Complete |
 | CMBT-07 | Phase 2 | Complete |
 | CMBT-08 | Phase 2 | Complete |
-| CMBT-09 | Phase 2 | Pending |
+| CMBT-09 | Phase 2 | Complete |
 | SHIP-01 | Phase 2 | Complete |
 | SHIP-02 | Phase 2 | Complete |
 | SHIP-03 | Phase 2 | Complete |
