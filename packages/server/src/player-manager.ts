@@ -53,17 +53,29 @@ export class PlayerManager {
   }
 
   /**
-   * Get all alive and connected players (excludes disconnected/held).
+   * Get all alive and connected players (excludes disconnected/held and spectators).
    */
   getAlivePlayers(): PlayerState[] {
-    return Array.from(this.players.values()).filter(p => p.alive && p.disconnectedAt === 0);
+    return Array.from(this.players.values()).filter(
+      p => p.alive && p.disconnectedAt === 0 && p.spectating !== true,
+    );
   }
 
   /**
-   * Get all players (alive and dead).
+   * Get all players (alive and dead, including spectators).
    */
   getAllPlayers(): PlayerState[] {
     return Array.from(this.players.values());
+  }
+
+  /**
+   * Set a player's spectator status.
+   */
+  setSpectator(id: string, spectating: boolean): void {
+    const player = this.players.get(id);
+    if (player) {
+      player.spectating = spectating;
+    }
   }
 
   /**

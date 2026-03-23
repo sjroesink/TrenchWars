@@ -91,6 +91,7 @@ export interface GameSnapshot {
   tick: number;
   players: {
     id: string;
+    name: string;
     x: number;
     y: number;
     vx: number;
@@ -99,6 +100,8 @@ export interface GameSnapshot {
     energy: number;
     shipType: number;
     alive: boolean;
+    kills: number;
+    deaths: number;
     lastProcessedSeq: number;
   }[];
   projectiles: {

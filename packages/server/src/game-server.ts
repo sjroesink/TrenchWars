@@ -16,6 +16,8 @@ import {
 import { PlayerManager } from './player-manager';
 import { WeaponManager } from './weapon-manager';
 import { LagCompensation } from './lag-compensation';
+import type { GameMode } from './game-modes/game-mode';
+import { FFAMode } from './game-modes/ffa-mode';
 
 /** Nanoseconds per tick for the 100Hz fixed-timestep loop. */
 const NS_PER_TICK = BigInt(Math.floor(1e9 / TICK_RATE));
@@ -39,6 +41,7 @@ interface QueuedInput {
 export interface GameServerOptions {
   map: TileMap;
   port: number;
+  gameMode?: GameMode;
 }
 
 /**
@@ -59,6 +62,7 @@ export class GameServer {
   readonly playerManager: PlayerManager;
   readonly weaponManager: WeaponManager;
   readonly lagCompensation: LagCompensation;
+  readonly gameMode: GameMode;
 
   private clients = new Map<string, WebSocket>();
   private inputQueues = new Map<string, QueuedInput[]>();
@@ -70,6 +74,7 @@ export class GameServer {
     this.playerManager = new PlayerManager();
     this.lagCompensation = new LagCompensation();
     this.weaponManager = new WeaponManager(this.lagCompensation);
+    this.gameMode = options.gameMode ?? new FFAMode(20);
   }
 
   /**
@@ -167,7 +172,7 @@ export class GameServer {
     // 2. Update weapons (movement, collision, hit detection, damage)
     const kills = this.weaponManager.update(TICK_DT, this.tickCount, this.map, this.playerManager);
 
-    // 3. Broadcast death events
+    // 3. Broadcast death events and forward kills to game mode
     for (const kill of kills) {
       this.broadcast({
         type: ServerMsg.DEATH,
@@ -175,19 +180,26 @@ export class GameServer {
         killedId: kill.killedId,
         weaponType: kill.weaponType,
       });
+
+      const events = this.gameMode.onKill(kill.killerId, kill.killedId, kill.weaponType);
+      for (const event of events) {
+        this.broadcast({ type: ServerMsg.GAME_STATE, event: event.type, ...event.data });
+      }
     }
 
-    // 4. Check for respawns
+    // 4. Check for respawns (gated by game mode)
     const allPlayers = this.playerManager.getAllPlayers();
     for (const player of allPlayers) {
       if (!player.alive && this.tickCount >= player.respawnTick) {
-        if (this.playerManager.respawnPlayer(player.id, this.map, this.tickCount)) {
-          this.broadcast({
-            type: ServerMsg.SPAWN,
-            playerId: player.id,
-            x: player.ship.x,
-            y: player.ship.y,
-          });
+        if (this.gameMode.canRespawn(player.id)) {
+          if (this.playerManager.respawnPlayer(player.id, this.map, this.tickCount)) {
+            this.broadcast({
+              type: ServerMsg.SPAWN,
+              playerId: player.id,
+              x: player.ship.x,
+              y: player.ship.y,
+            });
+          }
         }
       }
     }
@@ -197,9 +209,17 @@ export class GameServer {
       this.playerManager.cleanupDisconnected(this.tickCount);
     }
 
-    // 6. Broadcast snapshot every SNAPSHOT_RATE ticks (20Hz)
+    // 6. Process game mode tick events
+    const tickEvents = this.gameMode.onTick(this.tickCount);
+    for (const event of tickEvents) {
+      this.broadcast({ type: ServerMsg.GAME_STATE, event: event.type, ...event.data });
+    }
+
+    // 7. Broadcast snapshot every SNAPSHOT_RATE ticks (20Hz)
     if (this.tickCount % SNAPSHOT_RATE === 0) {
       this.broadcastSnapshot();
+      // Also broadcast score update alongside snapshot
+      this.broadcast({ type: ServerMsg.SCORE_UPDATE, state: this.gameMode.getState() });
     }
 
     this.tickCount++;
@@ -223,6 +243,9 @@ export class GameServer {
             break;
           case ClientMsg.SHIP_SELECT:
             if (playerId) this.handleShipSelect(playerId, msg.shipType);
+            break;
+          case ClientMsg.CHAT:
+            if (playerId) this.handleChat(playerId, msg.message as string);
             break;
           case ClientMsg.PING:
             this.send(ws, {
@@ -270,6 +293,9 @@ export class GameServer {
           this.inputQueues.set(playerId, []);
         }
 
+        // Notify game mode of rejoin
+        this.gameMode.onPlayerJoin(playerId, restored.name, restored.shipType);
+
         // Send WELCOME with existing state
         this.send(ws, {
           type: ServerMsg.WELCOME,
@@ -279,6 +305,7 @@ export class GameServer {
           mapHeight: this.map.height,
           sessionToken: restored.sessionToken,
           reconnected: true,
+          gameState: this.gameMode.getState(),
         });
 
         // Broadcast PLAYER_JOIN so other clients know they're back
@@ -301,6 +328,9 @@ export class GameServer {
     player.ship.x = spawnPos.x;
     player.ship.y = spawnPos.y;
 
+    // Notify game mode of new player
+    this.gameMode.onPlayerJoin(playerId, name, shipType);
+
     this.clients.set(playerId, ws);
     this.inputQueues.set(playerId, []);
 
@@ -312,6 +342,7 @@ export class GameServer {
       mapWidth: this.map.width,
       mapHeight: this.map.height,
       sessionToken: player.sessionToken,
+      gameState: this.gameMode.getState(),
     });
 
     // Broadcast PLAYER_JOIN to all other clients
@@ -357,6 +388,9 @@ export class GameServer {
   private onDisconnect(playerId: string): void {
     this.clients.delete(playerId);
 
+    // Notify game mode before broadcast
+    this.gameMode.onPlayerLeave(playerId);
+
     // Hold the player slot for potential reconnection
     this.playerManager.holdPlayer(playerId, this.tickCount);
 
@@ -386,6 +420,7 @@ export class GameServer {
       tick: this.tickCount,
       players: players.map(p => ({
         id: p.id,
+        name: p.name,
         x: p.ship.x,
         y: p.ship.y,
         vx: p.ship.vx,
@@ -394,6 +429,8 @@ export class GameServer {
         energy: p.ship.energy,
         shipType: p.shipType,
         alive: p.alive,
+        kills: p.kills,
+        deaths: p.deaths,
         lastProcessedSeq: p.lastProcessedSeq,
       })),
       projectiles: projectiles.map(pr => ({
@@ -434,6 +471,26 @@ export class GameServer {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(msg));
     }
+  }
+
+  /**
+   * Handle CHAT message: validate and broadcast to all clients.
+   * Max message length is 200 characters. Empty messages are rejected.
+   */
+  handleChat(playerId: string, message: string): void {
+    if (!message || typeof message !== 'string' || message.length === 0 || message.length > 200) {
+      return;
+    }
+
+    const player = this.playerManager.getPlayer(playerId);
+    if (!player) return;
+
+    this.broadcast({
+      type: ServerMsg.CHAT,
+      playerId,
+      name: player.name,
+      message,
+    });
   }
 
   /**

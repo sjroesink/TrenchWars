@@ -27,9 +27,9 @@ describe('Chat relay', () => {
     player.ship.y = 25;
 
     // Spy on broadcast by intercepting the private method
-    // We access the internal broadcast via the prototype
     broadcastSpy = vi.fn();
-    (server as unknown as { broadcast: (msg: Record<string, unknown>) => void }).broadcast = broadcastSpy;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (server as any).broadcast = broadcastSpy;
 
     // Register p1 as a connected client (simulate connection)
     (server as unknown as { clients: Map<string, unknown> }).clients.set('p1', {
