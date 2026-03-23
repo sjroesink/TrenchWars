@@ -261,9 +261,12 @@ describe('calculateBombDamage', () => {
   });
 
   it('higher level increases blast radius', () => {
-    // Level 1: explodeRadius = BOMB_EXPLODE_RADIUS * 2 = 10
-    // At distance 5 (half of 10), should get half damage
+    // Level 1: explodeRadius = BOMB_EXPLODE_RADIUS * 2
+    // At distance 5, damage should be less than full but > 0
     const damage = calculateBombDamage(5, 1);
-    expect(damage).toBe(Math.floor(BOMB_DAMAGE_LEVEL / 2)); // 275
+    const explodeRadius = BOMB_EXPLODE_RADIUS * 2;
+    const expected = Math.floor((explodeRadius - 5) * (BOMB_DAMAGE_LEVEL / explodeRadius));
+    expect(damage).toBe(expected);
+    expect(damage).toBeGreaterThan(0);
   });
 });

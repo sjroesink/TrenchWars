@@ -54,83 +54,87 @@ function convertShip(raw: RawShipValues): ShipConfig {
   };
 }
 
+// TW competitive settings (from published TW settings table)
 export const WARBIRD: ShipConfig = convertShip({
   name: 'Warbird',
-  rawRotation: 210,
+  rawRotation: 200,
   rawThrust: 16,
-  rawSpeed: 2010,
-  rawMaxRotation: 300,
-  rawMaxThrust: 19,
-  rawMaxSpeed: 3250,
-  rawRecharge: 400,
-  rawEnergy: 1000,
-  rawMaxRecharge: 1150,
-  rawMaxEnergy: 1700,
-  rawAfterburnerEnergy: 1200,
+  rawSpeed: 2000,
+  rawMaxRotation: 200,  // same as initial in TW
+  rawMaxThrust: 24,
+  rawMaxSpeed: 6000,
+  rawRecharge: 4000,
+  rawEnergy: 1500,
+  rawMaxRecharge: 4000,
+  rawMaxEnergy: 1500,
+  rawAfterburnerEnergy: 5500,
 });
 
 export const JAVELIN: ShipConfig = convertShip({
   name: 'Javelin',
   rawRotation: 200,
-  rawThrust: 15,
-  rawSpeed: 2200,
-  rawMaxRotation: 230,
-  rawMaxThrust: 17,
-  rawMaxSpeed: 3750,
-  rawRecharge: 400,
-  rawEnergy: 1000,
-  rawMaxRecharge: 1150,
-  rawMaxEnergy: 1700,
-  rawAfterburnerEnergy: 1200,
+  rawThrust: 13,
+  rawSpeed: 1900,
+  rawMaxRotation: 200,
+  rawMaxThrust: 24,
+  rawMaxSpeed: 6000,
+  rawRecharge: 1500,
+  rawEnergy: 1500,
+  rawMaxRecharge: 1500,
+  rawMaxEnergy: 1500,
+  rawAfterburnerEnergy: 5500,
 });
 
 export const SPIDER: ShipConfig = convertShip({
   name: 'Spider',
-  rawRotation: 200,
-  rawThrust: 15,
-  rawSpeed: 2010,
-  rawMaxRotation: 230,
-  rawMaxThrust: 17,
-  rawMaxSpeed: 3250,
-  rawRecharge: 500,
-  rawEnergy: 1000,
-  rawMaxRecharge: 1150,
-  rawMaxEnergy: 1700,
-  rawAfterburnerEnergy: 1200,
+  rawRotation: 180,
+  rawThrust: 18,
+  rawSpeed: 1700,
+  rawMaxRotation: 180,
+  rawMaxThrust: 24,
+  rawMaxSpeed: 6000,
+  rawRecharge: 2500,
+  rawEnergy: 1400,
+  rawMaxRecharge: 2500,
+  rawMaxEnergy: 1400,
+  rawAfterburnerEnergy: 6200,
 });
 
-// Per-ship weapon configurations (SVS defaults from research)
+// Per-ship weapon configurations (TW competitive settings)
+// BulletSpeed conversion: value / 10 / 16 = tiles/s
+// BulletDelay conversion: value / 100 = seconds
+// Negative bulletSpeed = rear-firing gun (Javelin)
 export const WARBIRD_WEAPONS: WeaponConfig = {
-  bulletSpeed: 2000 / 10 / 16,     // 12.5 tiles/s
-  bombSpeed: 2000 / 10 / 16,       // 12.5 tiles/s
-  bulletFireDelay: 25 / 100,        // 0.25 seconds
+  bulletSpeed: 5000 / 10 / 16,     // 31.25 tiles/s (fast forward gun)
+  bombSpeed: 2000 / 10 / 16,       // 12.5 tiles/s (no bomb in TW, but keep as fallback)
+  bulletFireDelay: 100 / 100,       // 1.00 seconds
   bombFireDelay: 50 / 100,          // 0.50 seconds
-  bulletFireEnergy: 80,
+  bulletFireEnergy: 450,
   bombFireEnergy: 300,
-  bombBounceCount: 0,               // Warbird: no bomb bounces (gun-focused)
-  bombThrust: 36 / 100 * 10 / 16,  // 0.225 tiles/s recoil
+  bombBounceCount: 0,               // Warbird: no bombs in TW
+  bombThrust: 50 / 100 * 10 / 16,  // recoil
 };
 
 export const JAVELIN_WEAPONS: WeaponConfig = {
-  bulletSpeed: 2000 / 10 / 16,
-  bombSpeed: 2000 / 10 / 16,
-  bulletFireDelay: 30 / 100,        // 0.30 seconds (slower bullets)
-  bombFireDelay: 40 / 100,          // 0.40 seconds (faster bombs)
-  bulletFireEnergy: 100,
-  bombFireEnergy: 250,
+  bulletSpeed: -900 / 10 / 16,     // -5.625 tiles/s (rear gun! fires backward)
+  bombSpeed: 2250 / 10 / 16,       // 14.0625 tiles/s
+  bulletFireDelay: 60 / 100,        // 0.60 seconds
+  bombFireDelay: 40 / 100,          // 0.40 seconds
+  bulletFireEnergy: 300,
+  bombFireEnergy: 1100,
   bombBounceCount: 1,               // Javelin: bounces once, explodes on second wall hit
-  bombThrust: 36 / 100 * 10 / 16,
+  bombThrust: 50 / 100 * 10 / 16,  // recoil
 };
 
 export const SPIDER_WEAPONS: WeaponConfig = {
-  bulletSpeed: 2000 / 10 / 16,
-  bombSpeed: 2000 / 10 / 16,
-  bulletFireDelay: 20 / 100,        // 0.20 seconds (fastest bullets)
+  bulletSpeed: 4000 / 10 / 16,     // 25.0 tiles/s
+  bombSpeed: 2000 / 10 / 16,       // 12.5 tiles/s
+  bulletFireDelay: 35 / 100,        // 0.35 seconds (fast fire)
   bombFireDelay: 50 / 100,          // 0.50 seconds
-  bulletFireEnergy: 60,
+  bulletFireEnergy: 225,
   bombFireEnergy: 300,
-  bombBounceCount: 0,               // Spider: no bomb bounces (mine-layer, not bouncer)
-  bombThrust: 36 / 100 * 10 / 16,
+  bombBounceCount: 0,               // Spider: no bomb bounces
+  bombThrust: 50 / 100 * 10 / 16,  // recoil
 };
 
 // Indexed by ship type number (0=Warbird, 1=Javelin, 2=Spider)
