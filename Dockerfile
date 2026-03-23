@@ -1,6 +1,8 @@
 # Stage 1: Build client static files
 FROM node:22-alpine AS builder
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
@@ -10,6 +12,7 @@ COPY packages/server/package.json packages/server/
 
 RUN npm ci
 
+COPY .git/ .git/
 COPY packages/shared/ packages/shared/
 COPY packages/client/ packages/client/
 COPY packages/server/ packages/server/

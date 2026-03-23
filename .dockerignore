@@ -1,6 +1,5 @@
 node_modules
 .planning
-.git
 *.md
 packages/client/dist
 packages/server/dist
