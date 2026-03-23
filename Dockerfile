@@ -15,8 +15,8 @@ COPY packages/client/ packages/client/
 COPY packages/server/ packages/server/
 COPY assets/ assets/
 
-# Build client → packages/client/dist
-RUN npx vite build --config packages/client/vite.config.ts --outDir dist
+# Build client → packages/client/dist (must run from client root where index.html lives)
+RUN cd packages/client && npx vite build --outDir dist
 
 # Stage 2: Production image
 FROM node:22-alpine
