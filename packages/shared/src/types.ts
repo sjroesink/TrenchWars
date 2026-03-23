@@ -83,6 +83,8 @@ export interface PlayerState {
   respawnTick: number;       // tick when respawn is allowed (0 = active)
   sessionToken: string;      // for reconnection (generated server-side)
   disconnectedAt: number;    // tick when disconnected (0 = connected)
+  team?: 0 | 1;              // team assignment (0 or 1, undefined if no team mode)
+  spectating?: boolean;      // true if player is spectating (no ship, no physics)
 }
 
 export interface GameSnapshot {

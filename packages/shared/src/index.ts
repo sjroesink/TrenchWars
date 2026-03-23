@@ -13,6 +13,7 @@ export {
   SHIP_WEAPONS, SHIP_CONFIGS,
 } from './ships';
 export { ClientMsg, ServerMsg } from './protocol';
+export type { GameModeType, GameModeConfig, FFAState, TeamArenaState, GameModeState, FFALeaderboardEntry } from './game-modes';
 export type { NetworkMessage } from './protocol';
 export { applyRotation, applyThrust, clampSpeed, updateEnergy, updateShipPhysics } from './physics';
 export { isWallAt, isCollidingWithWalls, simulateAxis, applyWallCollision } from './collision';
