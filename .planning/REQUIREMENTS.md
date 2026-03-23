@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **SHIP-02**: Javelin is available — slower, powerful bombs, higher damage
 - [x] **SHIP-03**: Spider is available — medium speed, mines-ready platform (bombs for v1)
 - [x] **SHIP-04**: Each ship type has distinct stats (speed, rotation, health, energy, fire rate)
-- [ ] **SHIP-05**: Player can select ship type before entering the arena
+- [x] **SHIP-05**: Player can select ship type before entering the arena
 
 ### Networking
 
@@ -43,7 +43,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **NETW-02**: Client-side prediction provides responsive local controls despite latency
 - [x] **NETW-03**: Server reconciliation corrects client predictions when they diverge
 - [x] **NETW-04**: Entity interpolation renders remote players smoothly between server updates
-- [ ] **NETW-05**: Player can reconnect to an active session after disconnect
+- [x] **NETW-05**: Player can reconnect to an active session after disconnect
 
 ### Game Modes
 
@@ -128,7 +128,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | NETW-02 | Phase 2 | Complete |
 | NETW-03 | Phase 2 | Complete |
 | NETW-04 | Phase 2 | Complete |
-| NETW-05 | Phase 2 | Pending |
+| NETW-05 | Phase 2 | Complete |
 | CMBT-01 | Phase 2 | Complete |
 | CMBT-02 | Phase 2 | Complete |
 | CMBT-03 | Phase 2 | Complete |
@@ -142,7 +142,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | SHIP-02 | Phase 2 | Complete |
 | SHIP-03 | Phase 2 | Complete |
 | SHIP-04 | Phase 2 | Complete |
-| SHIP-05 | Phase 2 | Pending |
+| SHIP-05 | Phase 2 | Complete |
 | MODE-01 | Phase 3 | Pending |
 | MODE-02 | Phase 3 | Pending |
 | MODE-03 | Phase 3 | Pending |
