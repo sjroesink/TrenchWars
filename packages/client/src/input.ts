@@ -19,12 +19,12 @@ export class InputManager {
     window.addEventListener('keydown', (e) => {
       this.keys.set(e.code, true);
 
-      // Edge-detect fire buttons (true once per press)
-      if (e.code === 'Space') {
+      // Edge-detect fire buttons (true once per press, ignore auto-repeat)
+      if (e.code === 'Space' && !e.repeat) {
         this.firePressed = true;
         e.preventDefault();
       }
-      if (e.code === 'Tab' || e.code === 'KeyF') {
+      if ((e.code === 'Tab' || e.code === 'KeyF') && !e.repeat) {
         this.fireBombPressed = true;
         e.preventDefault();
       }
