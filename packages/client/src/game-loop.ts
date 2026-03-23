@@ -225,14 +225,15 @@ export class GameLoop {
 
     // Fixed timestep physics updates
     while (this.accumulator >= TICK_DT) {
-      // Thrust audio: detect edge transitions
-      if (input.thrust && !this.wasThrusting && this.soundManager) {
+      // Thrust audio: detect edge transitions (forward or reverse)
+      const isThrusting = input.thrust || input.reverse;
+      if (isThrusting && !this.wasThrusting && this.soundManager) {
         this.soundManager.startThrust();
       }
-      if (!input.thrust && this.wasThrusting && this.soundManager) {
+      if (!isThrusting && this.wasThrusting && this.soundManager) {
         this.soundManager.stopThrust();
       }
-      this.wasThrusting = input.thrust;
+      this.wasThrusting = isThrusting;
 
       if (this.network && this.prediction) {
         // Networked mode: record, send, predict locally
@@ -318,9 +319,14 @@ export class GameLoop {
       projectiles = this.interpolation.getProjectiles();
     }
 
-    // Spawn exhaust particles while thrusting
+    // Spawn exhaust particles while thrusting (forward or reverse)
     if (input.thrust) {
       this.renderer.spawnExhaust(this.shipState.x, this.shipState.y, this.shipState.orientation);
+    }
+    if (input.reverse) {
+      // Reverse thrust: exhaust comes from the front (orientation + 0.5 = opposite direction)
+      const reverseOrientation = (this.shipState.orientation + 0.5) % 1;
+      this.renderer.spawnExhaust(this.shipState.x, this.shipState.y, reverseOrientation);
     }
 
     this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles);
