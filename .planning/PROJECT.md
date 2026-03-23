@@ -16,20 +16,20 @@ Two or more players can connect to a persistent arena and engage in real-time sp
 - [x] 3 ship types: Warbird (fast fighter), Javelin (bomber), Spider (mine layer) — Validated in Phase 1: configs with SVS-converted values
 - [x] Tile-based maps with walls and open space — Validated in Phase 1: 200x200 arena with corridors
 - [x] Browser-only client (Canvas/WebGL, no installation) — Validated in Phase 1: PixiJS WebGL renderer
+- [x] Real-time multiplayer combat in persistent arenas — Validated in Phase 2: WebSocket server + client prediction
+- [x] Bullets and bombs as weapon systems — Validated in Phase 2: TW competitive values, rear gun Javelin
+- [x] Ship selection screen — Validated in Phase 2: overlay with 1/2/3 keys
+- [x] Respawn system after death — Validated in Phase 2: safe location respawn
 
 ### Active
 
-- [ ] Classic rotate+thrust ship controls (spacebar to shoot — weapons pending)
-- [ ] Real-time multiplayer combat in persistent arenas
-- [ ] Bullets and bombs as weapon systems
+- [ ] Classic rotate+thrust ship controls (spacebar to shoot — weapons done, needs polish)
 - [ ] Free-for-all deathmatch mode
 - [ ] Team vs Team arena mode (2 teams, elimination rounds)
 - [ ] Persistent arena: players join a zone and play immediately
 - [ ] Modern 2D visual style (vector-like graphics, glow effects, neon-on-dark)
 - [ ] Publicly hosted and playable by anyone
 - [ ] Scoreboard and kill tracking
-- [ ] Ship selection screen
-- [ ] Respawn system after death
 - [ ] Radar/minimap showing player positions
 
 ### Out of Scope
@@ -72,7 +72,9 @@ The original game uses tile-based maps (304x304 tiles) with walls, open space, a
 | Persistent arena (not lobby/matchmaking) | Matches original game feel, lower friction to play | — Pending |
 | Browser-only (no Electron) | Maximum accessibility, zero install barrier | ✓ Phase 1 |
 | Modern 2D visuals (not retro pixel) | Fresh take while preserving gameplay essence | — Pending |
-| Authoritative server | Required for fair public multiplayer | — Pending |
+| Authoritative server | Required for fair public multiplayer | ✓ Phase 2 |
+| TW competitive settings | Use published TW values, not generic SVS defaults | ✓ Phase 2 |
+| Javelin rear gun | Negative bullet speed = fires backward (TW-authentic) | ✓ Phase 2 |
 
 ---
-*Last updated: 2026-03-23 after Phase 1 completion*
+*Last updated: 2026-03-23 after Phase 2 completion*
