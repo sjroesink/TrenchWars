@@ -12,20 +12,20 @@ Two or more players can connect to a persistent arena and engage in real-time sp
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Classic rotate+thrust ship controls (arrow keys to rotate/thrust) — Validated in Phase 1: ship-physics-and-arena
+- [x] 3 ship types: Warbird (fast fighter), Javelin (bomber), Spider (mine layer) — Validated in Phase 1: configs with SVS-converted values
+- [x] Tile-based maps with walls and open space — Validated in Phase 1: 200x200 arena with corridors
+- [x] Browser-only client (Canvas/WebGL, no installation) — Validated in Phase 1: PixiJS WebGL renderer
 
 ### Active
 
-- [ ] Classic rotate+thrust ship controls (arrow keys to rotate/thrust, spacebar to shoot)
+- [ ] Classic rotate+thrust ship controls (spacebar to shoot — weapons pending)
 - [ ] Real-time multiplayer combat in persistent arenas
-- [ ] 3 ship types: Warbird (fast fighter), Javelin (bomber), Spider (mine layer)
 - [ ] Bullets and bombs as weapon systems
 - [ ] Free-for-all deathmatch mode
 - [ ] Team vs Team arena mode (2 teams, elimination rounds)
 - [ ] Persistent arena: players join a zone and play immediately
-- [ ] Tile-based maps with walls and open space
 - [ ] Modern 2D visual style (vector-like graphics, glow effects, neon-on-dark)
-- [ ] Browser-only client (Canvas/WebGL, no installation)
 - [ ] Publicly hosted and playable by anyone
 - [ ] Scoreboard and kill tracking
 - [ ] Ship selection screen
@@ -68,11 +68,11 @@ The original game uses tile-based maps (304x304 tiles) with walls, open space, a
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Classic rotate+thrust controls | Core identity of SubSpace, what makes it unique vs other shooters | — Pending |
+| Classic rotate+thrust controls | Core identity of SubSpace, what makes it unique vs other shooters | ✓ Phase 1 |
 | Persistent arena (not lobby/matchmaking) | Matches original game feel, lower friction to play | — Pending |
-| Browser-only (no Electron) | Maximum accessibility, zero install barrier | — Pending |
+| Browser-only (no Electron) | Maximum accessibility, zero install barrier | ✓ Phase 1 |
 | Modern 2D visuals (not retro pixel) | Fresh take while preserving gameplay essence | — Pending |
 | Authoritative server | Required for fair public multiplayer | — Pending |
 
 ---
-*Last updated: 2026-03-22 after initialization*
+*Last updated: 2026-03-23 after Phase 1 completion*
