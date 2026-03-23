@@ -18,9 +18,9 @@ created: 2026-03-23
 | Property | Value |
 |----------|-------|
 | **Framework** | vitest (already configured in Phase 1) |
-| **Config file** | packages/shared/vitest.config.ts |
+| **Config file** | packages/shared/vitest.config.ts, packages/server/vitest.config.ts |
 | **Quick run command** | `npx vitest run` |
-| **Full suite command** | `npx vitest run && npx tsc --noEmit -p packages/shared/tsconfig.json && npx tsc --noEmit -p packages/client/tsconfig.json` |
+| **Full suite command** | `npx vitest run && npx tsc --noEmit -p packages/shared/tsconfig.json && npx tsc --noEmit -p packages/client/tsconfig.json && npx tsc --noEmit -p packages/server/tsconfig.json` |
 | **Estimated runtime** | ~5 seconds |
 
 ---
@@ -38,12 +38,19 @@ created: 2026-03-23
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | NETW-01 | unit | `npx vitest run packages/server/src` | ❌ W0 | ⬜ pending |
-| 02-01-02 | 01 | 1 | NETW-02 | unit | `npx vitest run packages/server/src` | ❌ W0 | ⬜ pending |
-| 02-02-01 | 02 | 2 | CMBT-01,CMBT-02 | unit | `npx vitest run packages/shared/src/weapons.test.ts` | ❌ W0 | ⬜ pending |
-| 02-02-02 | 02 | 2 | CMBT-03,CMBT-04 | unit | `npx vitest run packages/shared/src/weapons.test.ts` | ❌ W0 | ⬜ pending |
-| 02-03-01 | 03 | 3 | NETW-03,NETW-04 | integration | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 02-03-02 | 03 | 3 | CMBT-05,CMBT-06 | manual | Browser test | N/A | ⬜ pending |
+| 02-01-01 | 01 | 1 | NETW-01, SHIP-01 | unit | `npx tsc --noEmit -p packages/shared/tsconfig.json && npx tsc --noEmit -p packages/server/tsconfig.json` | N/A (scaffold) | ⬜ pending |
+| 02-01-02 | 01 | 1 | SHIP-02, SHIP-03, SHIP-04 | unit | `npx vitest run --project shared && npx tsc --noEmit -p packages/shared/tsconfig.json` | N/A (protocol) | ⬜ pending |
+| 02-02-01 | 02 | 2 | CMBT-01, CMBT-02, CMBT-03 | unit/tdd | `npx vitest run packages/shared/src/__tests__/weapons.test.ts` | ❌ W0 | ⬜ pending |
+| 02-03-01 | 03 | 3 | NETW-01, CMBT-06, CMBT-07 | unit | `npx vitest run packages/server/src/__tests__/player-manager.test.ts` | ❌ W0 | ⬜ pending |
+| 02-03-02 | 03 | 3 | CMBT-08, NETW-01 | unit/integration | `npx vitest run packages/server/src/__tests__/ && npx tsc --noEmit -p packages/server/tsconfig.json` | ❌ W0 | ⬜ pending |
+| 02-04-01 | 04 | 2 | NETW-02, NETW-03 | compile | `npx tsc --noEmit -p packages/client/tsconfig.json` | N/A | ⬜ pending |
+| 02-04-02 | 04 | 2 | NETW-02, NETW-03 | compile | `npx tsc --noEmit -p packages/client/tsconfig.json` | N/A | ⬜ pending |
+| 02-05-01 | 05 | 4 | CMBT-09 | unit/tdd | `npx vitest run packages/server/src/__tests__/lag-compensation.test.ts` | ❌ W0 | ⬜ pending |
+| 02-05-02 | 05 | 4 | CMBT-03, CMBT-09 | unit/tdd | `npx vitest run packages/server/src/__tests__/hit-detection.test.ts` | ❌ W0 | ⬜ pending |
+| 02-06-01 | 06 | 4 | NETW-04 | compile | `npx tsc --noEmit -p packages/client/tsconfig.json` | N/A | ⬜ pending |
+| 02-06-02 | 06 | 4 | NETW-04, CMBT-02 | compile | `npx tsc --noEmit -p packages/client/tsconfig.json` | N/A | ⬜ pending |
+| 02-07-01 | 07 | 5 | SHIP-05, NETW-05 | unit | `npx vitest run packages/server/src/__tests__/reconnect.test.ts && npx tsc --noEmit` | ❌ W0 | ⬜ pending |
+| 02-07-02 | 07 | 5 | ALL | manual | Browser test (human-verify checkpoint) | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,9 +58,13 @@ created: 2026-03-23
 
 ## Wave 0 Requirements
 
-- [ ] `packages/server/vitest.config.ts` — vitest config for server package
-- [ ] `packages/server/src/*.test.ts` — stubs for networking tests
-- [ ] `packages/shared/src/weapons.test.ts` — stubs for weapon mechanics
+- [ ] `packages/server/vitest.config.ts` — vitest config for server package (created in Plan 01)
+- [ ] `packages/shared/src/__tests__/weapons.test.ts` — weapon mechanics tests (created in Plan 02 TDD)
+- [ ] `packages/server/src/__tests__/player-manager.test.ts` — player manager tests (created in Plan 03)
+- [ ] `packages/server/src/__tests__/game-server.test.ts` — game server tests (created in Plan 03)
+- [ ] `packages/server/src/__tests__/lag-compensation.test.ts` — lag compensation tests (created in Plan 05)
+- [ ] `packages/server/src/__tests__/hit-detection.test.ts` — hit detection tests (created in Plan 05)
+- [ ] `packages/server/src/__tests__/reconnect.test.ts` — reconnect tests (created in Plan 07)
 
 ---
 
