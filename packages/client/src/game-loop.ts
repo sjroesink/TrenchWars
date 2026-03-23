@@ -1,8 +1,22 @@
-import type { ShipState, ShipConfig, TileMap } from '@trench-wars/shared';
+import type { ShipState, ShipConfig, TileMap, GameSnapshot } from '@trench-wars/shared';
 import { TICK_DT, DEFAULT_BOUNCE_FACTOR, updateShipPhysics, applyWallCollision } from '@trench-wars/shared';
 import type { InputManager } from './input';
 import type { Camera } from './camera';
 import type { Renderer } from './renderer';
+import type { NetworkClient } from './network';
+import type { PredictionManager } from './prediction';
+
+export interface RemotePlayer {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  orientation: number;
+  energy: number;
+  shipType: number;
+  alive: boolean;
+}
 
 export interface GameLoopOptions {
   shipState: ShipState;
@@ -12,11 +26,21 @@ export interface GameLoopOptions {
   camera: Camera;
   renderer: Renderer;
   bounceFactor?: number;
+  // Optional networking (when absent, runs local-only physics)
+  network?: NetworkClient;
+  prediction?: PredictionManager;
+  playerId?: string;
 }
 
 /**
  * Fixed-timestep accumulator at 100Hz with RAF rendering.
  * Physics runs at a fixed rate while rendering happens every animation frame.
+ *
+ * When network + prediction are provided:
+ * - Each tick: poll input, record in prediction buffer, send to server, apply locally
+ * - On server snapshot: reconcile by replaying unacknowledged inputs
+ *
+ * When network is absent: runs pure local physics (for testing).
  */
 export class GameLoop {
   private shipState: ShipState;
@@ -26,6 +50,15 @@ export class GameLoop {
   private camera: Camera;
   private renderer: Renderer;
   private bounceFactor: number;
+
+  // Networking (optional)
+  private network: NetworkClient | null;
+  private prediction: PredictionManager | null;
+  private playerId: string | null;
+  private localTick = 0;
+
+  // Remote players from latest server snapshot
+  private remotePlayers: Map<string, RemotePlayer> = new Map();
 
   private accumulator = 0;
   private lastTime = 0;
@@ -45,11 +78,75 @@ export class GameLoop {
     this.camera = options.camera;
     this.renderer = options.renderer;
     this.bounceFactor = options.bounceFactor ?? DEFAULT_BOUNCE_FACTOR;
+    this.network = options.network ?? null;
+    this.prediction = options.prediction ?? null;
+    this.playerId = options.playerId ?? null;
   }
 
   /** Allow external mutation of bounce factor (debug panel). */
   setBounceFactor(value: number): void {
     this.bounceFactor = value;
+  }
+
+  /** Get remote players for rendering */
+  getRemotePlayers(): Map<string, RemotePlayer> {
+    return this.remotePlayers;
+  }
+
+  /**
+   * Handle a server snapshot: reconcile local player, store remote players.
+   */
+  onSnapshot(snapshot: GameSnapshot): void {
+    if (!this.prediction || !this.playerId) return;
+
+    // Find local player in snapshot
+    const localData = snapshot.players.find((p) => p.id === this.playerId);
+    if (localData) {
+      // Build server state from snapshot data
+      const serverState: ShipState = {
+        x: localData.x,
+        y: localData.y,
+        vx: localData.vx,
+        vy: localData.vy,
+        orientation: localData.orientation,
+        energy: localData.energy,
+      };
+
+      // Reconcile: apply server state then replay unacknowledged inputs
+      const reconciled = this.prediction.reconcile(
+        serverState,
+        localData.lastProcessedSeq,
+        this.shipConfig,
+        this.tileMap,
+        this.bounceFactor,
+      );
+
+      // Update local state from reconciled result
+      this.shipState.x = reconciled.x;
+      this.shipState.y = reconciled.y;
+      this.shipState.vx = reconciled.vx;
+      this.shipState.vy = reconciled.vy;
+      this.shipState.orientation = reconciled.orientation;
+      this.shipState.energy = reconciled.energy;
+    }
+
+    // Store remote players (everyone except local player)
+    this.remotePlayers.clear();
+    for (const p of snapshot.players) {
+      if (p.id !== this.playerId) {
+        this.remotePlayers.set(p.id, {
+          id: p.id,
+          x: p.x,
+          y: p.y,
+          vx: p.vx,
+          vy: p.vy,
+          orientation: p.orientation,
+          energy: p.energy,
+          shipType: p.shipType,
+          alive: p.alive,
+        });
+      }
+    }
   }
 
   start(): void {
@@ -89,6 +186,25 @@ export class GameLoop {
 
     // Fixed timestep physics updates
     while (this.accumulator >= TICK_DT) {
+      if (this.network && this.prediction) {
+        // Networked mode: record, send, predict locally
+        const weapons = this.inputManager.pollWeapons();
+        const buffered = this.prediction.recordInput(
+          input,
+          this.localTick,
+          weapons.fire,
+          weapons.fireBomb,
+        );
+        this.network.sendInput(
+          buffered.seq,
+          buffered.tick,
+          input,
+          weapons.fire,
+          weapons.fireBomb,
+        );
+      }
+
+      // Apply physics locally (both networked prediction and local-only modes)
       updateShipPhysics(this.shipState, input, this.shipConfig, TICK_DT);
       applyWallCollision(
         this.shipState,
@@ -97,6 +213,8 @@ export class GameLoop {
         this.shipConfig.radius,
         this.bounceFactor,
       );
+
+      this.localTick++;
       this.accumulator -= TICK_DT;
     }
 
