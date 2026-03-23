@@ -118,7 +118,7 @@ export const JAVELIN_WEAPONS: WeaponConfig = {
   bombFireDelay: 40 / 100,          // 0.40 seconds (faster bombs)
   bulletFireEnergy: 100,
   bombFireEnergy: 250,
-  bombBounceCount: 3,               // Javelin: high bomb bounces
+  bombBounceCount: 1,               // Javelin: bounces once, explodes on second wall hit
   bombThrust: 36 / 100 * 10 / 16,
 };
 
@@ -129,7 +129,7 @@ export const SPIDER_WEAPONS: WeaponConfig = {
   bombFireDelay: 50 / 100,          // 0.50 seconds
   bulletFireEnergy: 60,
   bombFireEnergy: 300,
-  bombBounceCount: 2,               // Spider: medium bomb bounces
+  bombBounceCount: 0,               // Spider: no bomb bounces (mine-layer, not bouncer)
   bombThrust: 36 / 100 * 10 / 16,
 };
 
