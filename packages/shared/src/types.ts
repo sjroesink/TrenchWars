@@ -45,3 +45,64 @@ export interface TileMap {
   height: number;  // tiles
   tiles: number[]; // flat array, row-major. 0=empty, 1=wall
 }
+
+export interface WeaponConfig {
+  bulletSpeed: number;       // tiles/s (converted from SVS: value / 10 / 16)
+  bombSpeed: number;         // tiles/s
+  bulletFireDelay: number;   // seconds (converted from SVS: value / 100)
+  bombFireDelay: number;     // seconds
+  bulletFireEnergy: number;  // energy cost per bullet
+  bombFireEnergy: number;    // energy cost per bomb
+  bombBounceCount: number;   // wall bounces before explosion
+  bombThrust: number;        // tiles/s recoil on bomb fire (SVS: value / 100 * 10 / 16)
+}
+
+export interface ProjectileState {
+  id: number;
+  ownerId: string;
+  type: 'bullet' | 'bomb';
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  level: number;
+  bouncesRemaining: number;
+  endTick: number;           // tick at which projectile despawns
+}
+
+export interface PlayerState {
+  id: string;
+  name: string;
+  shipType: number;          // 0=Warbird, 1=Javelin, 2=Spider
+  ship: ShipState;
+  alive: boolean;
+  kills: number;
+  deaths: number;
+  lastProcessedSeq: number;  // for client reconciliation
+  respawnTick: number;       // tick when respawn is allowed (0 = active)
+}
+
+export interface GameSnapshot {
+  tick: number;
+  players: {
+    id: string;
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    orientation: number;
+    energy: number;
+    shipType: number;
+    alive: boolean;
+    lastProcessedSeq: number;
+  }[];
+  projectiles: {
+    id: number;
+    type: 'bullet' | 'bomb';
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    ownerId: string;
+  }[];
+}

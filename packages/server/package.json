@@ -1,0 +1,20 @@
+{
+  "name": "@trench-wars/server",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/main.ts",
+  "dependencies": {
+    "ws": "^8.20.0",
+    "@trench-wars/shared": "*"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9",
+    "vitest": "^4.1"
+  },
+  "scripts": {
+    "dev": "npx tsx --watch src/main.ts",
+    "build": "tsc",
+    "test": "vitest run"
+  }
+}
