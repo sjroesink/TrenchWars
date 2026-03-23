@@ -13,6 +13,8 @@ import { Chat } from './ui/chat';
 import { HUD } from './ui/hud';
 import { KillFeed } from './ui/kill-feed';
 import { Scoreboard } from './ui/scoreboard';
+import { GameOverScreen } from './ui/game-over';
+import { SoundManager } from './audio/sound-manager';
 import type { GameModeState, FFAState } from '@trench-wars/shared';
 
 /** Server WebSocket URL (configurable via query param or default) */
@@ -30,8 +32,15 @@ async function main(): Promise<void> {
   // Player name — prompt or default
   const playerName = prompt('Enter name:') || 'Player';
 
+  // Audio and game-over screen
+  const soundManager = new SoundManager();
+  const gameOverScreen = new GameOverScreen();
+
   // Show ship selection overlay before connecting
-  const shipSelectOverlay = new ShipSelectOverlay();
+  // onInteraction initializes audio on first user gesture (browser autoplay policy)
+  const shipSelectOverlay = new ShipSelectOverlay({
+    onInteraction: () => soundManager.init(),
+  });
   const selectedShipType = await shipSelectOverlay.show();
   const selectedConfig = SHIP_CONFIGS[selectedShipType];
 
@@ -109,6 +118,8 @@ async function main(): Promise<void> {
           prediction,
           playerId,
           hud,
+          soundManager,
+          onFire: (type) => soundManager.play(type === 'bullet' ? 'bulletFire' : 'bombFire'),
         });
 
         // Create debug panel (references the same mutable config and state)
@@ -160,6 +171,11 @@ async function main(): Promise<void> {
         const victimName = playerNames.get(data.killedId) || data.killedId;
         const weaponType = (data.weaponType === 'bomb' ? 'bomb' : 'bullet') as 'bullet' | 'bomb';
         killFeed.addKill(killerName, victimName, weaponType);
+        // Audio: explosion for any death, death sound if local player died
+        soundManager.play('explosion');
+        if (data.killedId === playerId) {
+          soundManager.play('death');
+        }
         console.log(`Kill: ${killerName} -> ${victimName} (${data.weaponType})`);
       },
 
@@ -190,6 +206,22 @@ async function main(): Promise<void> {
         chat.addMessage(data.name, data.message);
       },
 
+      onGameState: (data) => {
+        if (data.event === 'game-over') {
+          const modeType = data.modeType as string | undefined;
+          if (modeType === 'team-arena') {
+            const winnerTeam = data.winnerTeam as number | undefined;
+            const teamColor = winnerTeam === 0 ? '#4488ff' : '#ff4444';
+            const teamName = winnerTeam === 0 ? 'Blue' : 'Red';
+            gameOverScreen.show(`${teamName} team wins!`, teamColor, 'Match complete');
+          } else {
+            // FFA mode
+            const winnerName = data.winnerName as string || 'Unknown';
+            gameOverScreen.show(`${winnerName} wins the match!`, '#00ff88', 'Match complete');
+          }
+        }
+      },
+
       onDisconnect: () => {
         console.warn('Disconnected from server -- attempting reconnect...');
       },
@@ -217,6 +249,7 @@ async function main(): Promise<void> {
       camera,
       renderer,
       hud,
+      soundManager,
     });
 
     // Create debug panel

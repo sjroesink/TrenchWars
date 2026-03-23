@@ -8,6 +8,7 @@ import type { PredictionManager } from './prediction';
 import { InterpolationManager } from './interpolation';
 import type { InterpolatedEntity } from './interpolation';
 import type { HUD } from './ui/hud';
+import type { SoundManager } from './audio/sound-manager';
 
 export interface RemotePlayer {
   id: string;
@@ -35,6 +36,10 @@ export interface GameLoopOptions {
   playerId?: string;
   // Optional UI overlays
   hud?: HUD;
+  // Optional audio
+  soundManager?: SoundManager;
+  // Callbacks
+  onFire?: (type: 'bullet' | 'bomb') => void;
 }
 
 /**
@@ -64,6 +69,15 @@ export class GameLoop {
 
   // UI overlays (optional)
   private hud: HUD | null;
+
+  // Audio (optional)
+  private soundManager: SoundManager | null;
+
+  // Callbacks
+  private onFire: ((type: 'bullet' | 'bomb') => void) | null;
+
+  // Thrust state tracking for audio
+  private wasThrusting = false;
 
   // Player score tracking (updated from snapshots)
   kills = 0;
@@ -97,6 +111,8 @@ export class GameLoop {
     this.prediction = options.prediction ?? null;
     this.playerId = options.playerId ?? null;
     this.hud = options.hud ?? null;
+    this.soundManager = options.soundManager ?? null;
+    this.onFire = options.onFire ?? null;
   }
 
   /** Allow external mutation of bounce factor (debug panel). */
@@ -209,6 +225,15 @@ export class GameLoop {
 
     // Fixed timestep physics updates
     while (this.accumulator >= TICK_DT) {
+      // Thrust audio: detect edge transitions
+      if (input.thrust && !this.wasThrusting && this.soundManager) {
+        this.soundManager.startThrust();
+      }
+      if (!input.thrust && this.wasThrusting && this.soundManager) {
+        this.soundManager.stopThrust();
+      }
+      this.wasThrusting = input.thrust;
+
       if (this.network && this.prediction) {
         // Networked mode: record, send, predict locally
         const weapons = this.inputManager.pollWeapons();
@@ -225,10 +250,19 @@ export class GameLoop {
           weapons.fire,
           weapons.fireBomb,
         );
+
+        // Fire audio callbacks
+        if (weapons.fire && this.onFire) this.onFire('bullet');
+        if (weapons.fireBomb && this.onFire) this.onFire('bomb');
       }
 
       // Apply physics locally (both networked prediction and local-only modes)
       updateShipPhysics(this.shipState, input, this.shipConfig, TICK_DT);
+
+      // Save velocity for bounce detection
+      const prevVx = this.shipState.vx;
+      const prevVy = this.shipState.vy;
+
       applyWallCollision(
         this.shipState,
         TICK_DT,
@@ -236,6 +270,15 @@ export class GameLoop {
         this.shipConfig.radius,
         this.bounceFactor,
       );
+
+      // Bounce detection: velocity sign flip on either axis
+      if (this.soundManager) {
+        const vxFlipped = prevVx !== 0 && Math.sign(this.shipState.vx) !== Math.sign(prevVx);
+        const vyFlipped = prevVy !== 0 && Math.sign(this.shipState.vy) !== Math.sign(prevVy);
+        if (vxFlipped || vyFlipped) {
+          this.soundManager.play('bounce');
+        }
+      }
 
       this.localTick++;
       this.accumulator -= TICK_DT;
@@ -273,7 +316,15 @@ export class GameLoop {
       projectiles = this.interpolation.getProjectiles();
     }
 
+    // Spawn exhaust particles while thrusting
+    if (input.thrust) {
+      this.renderer.spawnExhaust(this.shipState.x, this.shipState.y, this.shipState.orientation);
+    }
+
     this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles);
+
+    // Render visual effects (exhaust particles, explosions)
+    this.renderer.renderEffects(this.camera);
 
     // Render radar minimap with player positions
     this.renderer.renderRadar(

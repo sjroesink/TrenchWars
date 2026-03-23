@@ -5,12 +5,25 @@
  */
 export class ShipSelectOverlay {
   private overlay: HTMLDivElement | null = null;
+  private onInteraction?: () => void;
+
+  constructor(options?: { onInteraction?: () => void }) {
+    this.onInteraction = options?.onInteraction;
+  }
 
   /**
    * Show the ship selection overlay and wait for the user to choose.
    * Resolves with ship type index: 0=Warbird, 1=Javelin, 2=Spider.
    */
   show(): Promise<number> {
+    let interactionFired = false;
+    const fireInteraction = () => {
+      if (!interactionFired) {
+        interactionFired = true;
+        this.onInteraction?.();
+      }
+    };
+
     return new Promise<number>((resolve) => {
       // Create overlay container
       const overlay = document.createElement('div');
@@ -67,6 +80,7 @@ export class ShipSelectOverlay {
 
         const shipIndex = i;
         option.addEventListener('click', () => {
+          fireInteraction();
           cleanup();
           resolve(shipIndex);
         });
@@ -87,6 +101,7 @@ export class ShipSelectOverlay {
       const onKey = (e: KeyboardEvent) => {
         const index = parseInt(e.key, 10) - 1;
         if (index >= 0 && index <= 2) {
+          fireInteraction();
           cleanup();
           resolve(index);
         }
