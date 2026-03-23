@@ -85,7 +85,7 @@ export class GameLoop {
   private wasThrusting = false;
 
   // Client-predicted projectiles (spawned immediately on fire, removed when server confirms)
-  private localProjectiles: ProjectileState[] = [];
+  private localProjectiles: (ProjectileState & { spawnTime: number })[] = [];
   private localProjectileNextId = -1; // negative IDs to distinguish from server IDs
   private shipType = 0;
 
@@ -266,21 +266,22 @@ export class GameLoop {
 
         // Client-side predicted projectiles: spawn immediately
         const wc = SHIP_WEAPONS[this.shipType];
+        const now = Date.now();
         if (weapons.fire && wc) {
           const id = this.localProjectileNextId--;
           const bullet = createBullet(this.shipState, wc, this.playerId || '', id, this.localTick);
-          this.localProjectiles.push(bullet);
+          this.localProjectiles.push({ ...bullet, spawnTime: now });
         }
         if (weapons.fireBomb && wc) {
           const id = this.localProjectileNextId--;
           const { projectile } = createBomb(this.shipState, wc, this.playerId || '', id, this.localTick);
-          this.localProjectiles.push(projectile);
+          this.localProjectiles.push({ ...projectile, spawnTime: now });
         }
         if (weapons.multifire && wc && wc.multifireCount > 0) {
           const startId = this.localProjectileNextId;
           this.localProjectileNextId -= wc.multifireCount;
           const bullets = createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick);
-          this.localProjectiles.push(...bullets);
+          for (const b of bullets) this.localProjectiles.push({ ...b, spawnTime: now });
         }
 
         // Fire audio callbacks
@@ -360,17 +361,18 @@ export class GameLoop {
         }
       }
       const serverProjectiles = this.interpolation.getProjectiles();
-      // Remove local predictions once server has projectiles from this player
-      // (server is authoritative — once it confirms, drop all local predictions)
-      if (serverProjectiles.length > 0 && this.localProjectiles.length > 0) {
-        const serverHasOurs = serverProjectiles.some(
-          (sp) => sp.ownerId === this.playerId,
+      // Remove local predictions that are old enough for the server to have them (>150ms).
+      // Keep recent ones to avoid the visual gap between fire and server confirmation.
+      const now = Date.now();
+      const serverHasOurs = serverProjectiles.some(
+        (sp) => sp.ownerId === this.playerId,
+      );
+      if (serverHasOurs) {
+        this.localProjectiles = this.localProjectiles.filter(
+          (p) => now - p.spawnTime < 150,
         );
-        if (serverHasOurs) {
-          this.localProjectiles = [];
-        }
       }
-      // Combine: server projectiles + remaining local predictions
+      // Combine: server projectiles + recent local predictions
       const localAsSnapshot = this.localProjectiles.map((p) => ({
         id: p.id, type: p.type, x: p.x, y: p.y, vx: p.vx, vy: p.vy,
         ownerId: p.ownerId, rear: p.rear,
