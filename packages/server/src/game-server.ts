@@ -15,6 +15,7 @@ import {
 } from '@trench-wars/shared';
 import { PlayerManager } from './player-manager';
 import { WeaponManager } from './weapon-manager';
+import { LagCompensation } from './lag-compensation';
 
 /** Nanoseconds per tick for the 100Hz fixed-timestep loop. */
 const NS_PER_TICK = BigInt(Math.floor(1e9 / TICK_RATE));
@@ -56,6 +57,7 @@ export class GameServer {
 
   readonly playerManager: PlayerManager;
   readonly weaponManager: WeaponManager;
+  readonly lagCompensation: LagCompensation;
 
   private clients = new Map<string, WebSocket>();
   private inputQueues = new Map<string, QueuedInput[]>();
@@ -65,7 +67,8 @@ export class GameServer {
     this.map = options.map;
     this.port = options.port;
     this.playerManager = new PlayerManager();
-    this.weaponManager = new WeaponManager();
+    this.lagCompensation = new LagCompensation();
+    this.weaponManager = new WeaponManager(this.lagCompensation);
   }
 
   /**
@@ -123,6 +126,17 @@ export class GameServer {
    */
   private tick(): void {
     const alivePlayers = this.playerManager.getAlivePlayers();
+
+    // Record positions for lag compensation before processing inputs
+    this.lagCompensation.record(
+      this.tickCount,
+      alivePlayers.map(p => ({
+        id: p.id,
+        x: p.ship.x,
+        y: p.ship.y,
+        radius: SHIP_CONFIGS[p.shipType].radius,
+      })),
+    );
 
     // 1. Process inputs for alive players
     for (const player of alivePlayers) {

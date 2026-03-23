@@ -10,16 +10,24 @@ import {
   SHIP_CONFIGS,
 } from '@trench-wars/shared';
 import type { PlayerManager } from './player-manager';
+import type { LagCompensation } from './lag-compensation';
 
 /**
  * Manages active projectiles: creation, simulation, hit detection, and removal.
- * Tracks per-player fire cooldowns.
+ * Tracks per-player fire cooldowns. Uses lag compensation for fair hit detection.
  */
 export class WeaponManager {
   private projectiles: ProjectileState[] = [];
   private nextId = 1;
   /** Per-player cooldown tracking: playerId -> { nextBulletTick, nextBombTick } */
   private cooldowns = new Map<string, { nextBulletTick: number; nextBombTick: number }>();
+  /** Tracks the tick at which each projectile was created, for lag compensation rewind. */
+  private creationTicks = new Map<number, number>();
+  private lagCompensation: LagCompensation | null;
+
+  constructor(lagCompensation?: LagCompensation) {
+    this.lagCompensation = lagCompensation ?? null;
+  }
 
   /**
    * Get or create cooldown entry for a player.
@@ -43,8 +51,10 @@ export class WeaponManager {
     if (player.ship.energy < weaponConfig.bulletFireEnergy) return false;
 
     player.ship.energy -= weaponConfig.bulletFireEnergy;
-    const bullet = createBullet(player.ship, weaponConfig, player.id, this.nextId++, tick);
+    const id = this.nextId++;
+    const bullet = createBullet(player.ship, weaponConfig, player.id, id, tick);
     this.projectiles.push(bullet);
+    this.creationTicks.set(id, tick);
     // Convert fire delay from seconds to ticks (100Hz)
     cd.nextBulletTick = tick + Math.ceil(weaponConfig.bulletFireDelay * 100);
     return true;
@@ -60,10 +70,12 @@ export class WeaponManager {
     if (player.ship.energy < weaponConfig.bombFireEnergy) return false;
 
     player.ship.energy -= weaponConfig.bombFireEnergy;
+    const id = this.nextId++;
     const { projectile, recoilVx, recoilVy } = createBomb(
-      player.ship, weaponConfig, player.id, this.nextId++, tick,
+      player.ship, weaponConfig, player.id, id, tick,
     );
     this.projectiles.push(projectile);
+    this.creationTicks.set(id, tick);
     player.ship.vx += recoilVx;
     player.ship.vy += recoilVy;
     cd.nextBombTick = tick + Math.ceil(weaponConfig.bombFireDelay * 100);
@@ -116,10 +128,22 @@ export class WeaponManager {
         continue;
       }
 
-      // Check hit against alive players
+      // Check hit against alive players using lag-compensated positions
+      const creationTick = this.creationTicks.get(proj.id);
+      const historicalPositions = (this.lagCompensation && creationTick !== undefined)
+        ? this.lagCompensation.getPositionsAtTick(creationTick)
+        : null;
+
       for (const player of alivePlayers) {
         const config = SHIP_CONFIGS[player.shipType];
-        if (checkProjectileHit(proj, player.ship.x, player.ship.y, config.radius, player.id)) {
+
+        // Use historical position if available, otherwise fall back to current
+        const histPos = historicalPositions?.get(player.id);
+        const checkX = histPos ? histPos.x : player.ship.x;
+        const checkY = histPos ? histPos.y : player.ship.y;
+        const checkRadius = histPos ? histPos.radius : config.radius;
+
+        if (checkProjectileHit(proj, checkX, checkY, checkRadius, player.id)) {
           if (proj.type === 'bullet') {
             const dead = playerManager.applyDamage(player.id, BULLET_DAMAGE_LEVEL);
             if (dead) {
@@ -133,6 +157,7 @@ export class WeaponManager {
               kills.push(playerManager.killPlayer(player.id, proj.ownerId, 'bomb', tick));
             }
           }
+          this.creationTicks.delete(proj.id);
           toRemove.add(i);
           break; // Projectile consumed on first hit
         }
@@ -142,6 +167,7 @@ export class WeaponManager {
     // Remove projectiles in reverse order to preserve indices
     const removeIndices = Array.from(toRemove).sort((a, b) => b - a);
     for (const idx of removeIndices) {
+      this.creationTicks.delete(this.projectiles[idx].id);
       this.projectiles.splice(idx, 1);
     }
 
