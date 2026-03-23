@@ -94,7 +94,7 @@ export class PlayerManager {
     killerId: string,
     weaponType: 'bullet' | 'bomb',
     currentTick: number,
-  ): { killerId: string; killedId: string; weaponType: string } {
+  ): { killerId: string; killedId: string; weaponType: 'bullet' | 'bomb' } {
     const killed = this.players.get(killedId);
     if (killed) {
       killed.alive = false;
