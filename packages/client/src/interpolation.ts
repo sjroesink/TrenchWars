@@ -76,11 +76,19 @@ export class InterpolationManager {
     };
   }
 
-  /** Get interpolated projectiles from latest snapshot (simple -- projectiles move predictably) */
+  /** Get extrapolated projectiles from latest snapshot.
+   *  Projectiles move at constant velocity, so we extrapolate from the
+   *  last snapshot time to now for smooth 60fps rendering. */
   getProjectiles(): GameSnapshot['projectiles'] {
     if (this.snapshotBuffer.length === 0) return [];
-    return this.snapshotBuffer[this.snapshotBuffer.length - 1].snapshot
-      .projectiles;
+    const latest = this.snapshotBuffer[this.snapshotBuffer.length - 1];
+    const dt = (Date.now() - latest.time) / 1000; // seconds since snapshot
+
+    return latest.snapshot.projectiles.map((p) => ({
+      ...p,
+      x: p.x + p.vx * dt,
+      y: p.y + p.vy * dt,
+    }));
   }
 
   /** Get all remote player IDs from latest snapshot */
