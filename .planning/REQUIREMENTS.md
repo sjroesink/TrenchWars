@@ -59,9 +59,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI & Experience
 
-- [ ] **UIEX-01**: Ship selection screen where player picks ship type
-- [ ] **UIEX-02**: In-game HUD showing health, energy, and kill/death count
-- [ ] **UIEX-03**: Scoreboard/leaderboard visible during gameplay
+- [x] **UIEX-01**: Ship selection screen where player picks ship type
+- [x] **UIEX-02**: In-game HUD showing health, energy, and kill/death count
+- [x] **UIEX-03**: Scoreboard/leaderboard visible during gameplay
 - [x] **UIEX-04**: Minimap/radar showing player positions on the map
 - [x] **UIEX-05**: Text chat between players in the same arena
 - [x] **UIEX-06**: Audio effects for engine thrust, weapon fire, and explosions
@@ -146,9 +146,9 @@ Requirements for initial release. Each maps to roadmap phases.
 | MODE-01 | Phase 3 | Complete |
 | MODE-02 | Phase 3 | Complete |
 | MODE-03 | Phase 3 | Complete |
-| UIEX-01 | Phase 3 | Pending |
-| UIEX-02 | Phase 3 | Pending |
-| UIEX-03 | Phase 3 | Pending |
+| UIEX-01 | Phase 3 | Complete |
+| UIEX-02 | Phase 3 | Complete |
+| UIEX-03 | Phase 3 | Complete |
 | UIEX-04 | Phase 3 | Complete |
 | UIEX-05 | Phase 3 | Complete |
 | UIEX-06 | Phase 3 | Complete |
