@@ -1,5 +1,6 @@
+import crypto from 'node:crypto';
 import type { PlayerState, TileMap } from '@trench-wars/shared';
-import { SHIP_CONFIGS, ENTER_DELAY, isCollidingWithWalls } from '@trench-wars/shared';
+import { SHIP_CONFIGS, ENTER_DELAY, RECONNECT_TIMEOUT, isCollidingWithWalls } from '@trench-wars/shared';
 
 /**
  * Manages player lifecycle: join, leave, death, respawn, damage.
@@ -30,6 +31,8 @@ export class PlayerManager {
       deaths: 0,
       lastProcessedSeq: 0,
       respawnTick: 0,
+      sessionToken: crypto.randomUUID(),
+      disconnectedAt: 0,
     };
     this.players.set(id, player);
     return player;
@@ -50,10 +53,10 @@ export class PlayerManager {
   }
 
   /**
-   * Get all alive players.
+   * Get all alive and connected players (excludes disconnected/held).
    */
   getAlivePlayers(): PlayerState[] {
-    return Array.from(this.players.values()).filter(p => p.alive);
+    return Array.from(this.players.values()).filter(p => p.alive && p.disconnectedAt === 0);
   }
 
   /**
@@ -141,5 +144,52 @@ export class PlayerManager {
 
     player.ship.energy -= amount;
     return player.ship.energy <= 0;
+  }
+
+  /**
+   * Mark a player as disconnected (hold their slot for reconnection).
+   * The player stays in the map but is not included in alive players.
+   */
+  holdPlayer(id: string, tick: number): void {
+    const player = this.players.get(id);
+    if (player) {
+      player.disconnectedAt = tick;
+    }
+  }
+
+  /**
+   * Attempt to restore a disconnected player via session token.
+   * Returns the PlayerState if valid and within timeout, null otherwise.
+   */
+  restorePlayer(sessionToken: string, currentTick: number): PlayerState | null {
+    for (const player of this.players.values()) {
+      if (player.sessionToken === sessionToken && player.disconnectedAt > 0) {
+        if (currentTick - player.disconnectedAt <= RECONNECT_TIMEOUT) {
+          player.disconnectedAt = 0;
+          return player;
+        }
+        // Token matched but timed out
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Remove players whose disconnect timeout has expired.
+   */
+  cleanupDisconnected(currentTick: number): void {
+    for (const [id, player] of this.players.entries()) {
+      if (player.disconnectedAt > 0 && currentTick - player.disconnectedAt > RECONNECT_TIMEOUT) {
+        this.players.delete(id);
+      }
+    }
+  }
+
+  /**
+   * Get all connected players (excluding disconnected/held).
+   */
+  getConnectedPlayers(): PlayerState[] {
+    return Array.from(this.players.values()).filter(p => p.disconnectedAt === 0);
   }
 }

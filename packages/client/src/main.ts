@@ -1,5 +1,5 @@
 import { Application } from 'pixi.js';
-import { parseMap, WARBIRD } from '@trench-wars/shared';
+import { parseMap, WARBIRD, SHIP_CONFIGS } from '@trench-wars/shared';
 import type { ShipState, ShipConfig, GameSnapshot } from '@trench-wars/shared';
 import { InputManager } from './input';
 import { Camera } from './camera';
@@ -8,6 +8,7 @@ import { GameLoop } from './game-loop';
 import { DebugPanel } from './debug';
 import { NetworkClient } from './network';
 import { PredictionManager } from './prediction';
+import { ShipSelectOverlay } from './ship-select';
 
 /** Server WebSocket URL (configurable via query param or default) */
 function getServerUrl(): string {
@@ -21,6 +22,14 @@ async function main(): Promise<void> {
   const json = await response.text();
   const tileMap = parseMap(json);
 
+  // Player name — prompt or default
+  const playerName = prompt('Enter name:') || 'Player';
+
+  // Show ship selection overlay before connecting
+  const shipSelectOverlay = new ShipSelectOverlay();
+  const selectedShipType = await shipSelectOverlay.show();
+  const selectedConfig = SHIP_CONFIGS[selectedShipType];
+
   // Create initial ship state (spawn in open area of the map)
   const shipState: ShipState = {
     x: 100,
@@ -28,11 +37,11 @@ async function main(): Promise<void> {
     vx: 0,
     vy: 0,
     orientation: 0,
-    energy: 1000,
+    energy: selectedConfig.energy,
   };
 
   // Mutable config copy so debug panel can modify it
-  const shipConfig: ShipConfig = { ...WARBIRD };
+  const shipConfig: ShipConfig = { ...selectedConfig };
 
   // Initialize systems
   const inputManager = new InputManager();
@@ -46,9 +55,7 @@ async function main(): Promise<void> {
   let prediction: PredictionManager | undefined;
   let playerId: string | undefined;
   let gameLoop: GameLoop | undefined;
-
-  // Player name — prompt or default
-  const playerName = prompt('Enter name:') || 'Player';
+  let debugStarted = false;
 
   try {
     prediction = new PredictionManager();
@@ -56,7 +63,19 @@ async function main(): Promise<void> {
     network = new NetworkClient({
       onWelcome: (data) => {
         playerId = data.playerId;
-        console.log(`Connected as ${playerId} at tick ${data.tick}`);
+        console.log(`Connected as ${playerId} at tick ${data.tick}${data.reconnected ? ' (reconnected)' : ''}`);
+
+        // Store session token for reconnection
+        if (data.sessionToken) {
+          network!.setSessionToken(data.sessionToken);
+        }
+
+        // On reconnect, clear prediction buffer but don't recreate game loop
+        if (data.reconnected && gameLoop) {
+          prediction!.clear();
+          console.log('Reconnected -- prediction buffer cleared');
+          return;
+        }
 
         // Create game loop with networking
         gameLoop = new GameLoop({
@@ -72,12 +91,15 @@ async function main(): Promise<void> {
         });
 
         // Create debug panel (references the same mutable config and state)
-        const debugPanel = new DebugPanel(shipConfig, shipState, gameLoop);
-        function updateDebug(): void {
-          debugPanel.update();
+        if (!debugStarted) {
+          debugStarted = true;
+          const debugPanel = new DebugPanel(shipConfig, shipState, gameLoop);
+          function updateDebug(): void {
+            debugPanel.update();
+            requestAnimationFrame(updateDebug);
+          }
           requestAnimationFrame(updateDebug);
         }
-        requestAnimationFrame(updateDebug);
 
         // Start the game loop after welcome
         gameLoop.start();
@@ -116,12 +138,20 @@ async function main(): Promise<void> {
         const rtt = Date.now() - data.clientTime;
         console.log(`Ping: ${rtt}ms`);
       },
+
+      onDisconnect: () => {
+        console.warn('Disconnected from server -- attempting reconnect...');
+      },
+
+      onReconnect: () => {
+        console.log('Reconnection successful');
+      },
     });
 
     await network.connect(serverUrl);
 
-    // Send JOIN after connection
-    network.sendJoin(playerName, 0); // 0 = Warbird
+    // Send JOIN after connection with selected ship type
+    network.sendJoin(playerName, selectedShipType);
     console.log(`Connecting to ${serverUrl}...`);
   } catch {
     // Server not available — fall back to local-only mode
@@ -137,12 +167,15 @@ async function main(): Promise<void> {
     });
 
     // Create debug panel
-    const debugPanel = new DebugPanel(shipConfig, shipState, gameLoop);
-    function updateDebug(): void {
-      debugPanel.update();
+    if (!debugStarted) {
+      debugStarted = true;
+      const debugPanel = new DebugPanel(shipConfig, shipState, gameLoop);
+      function updateDebug(): void {
+        debugPanel.update();
+        requestAnimationFrame(updateDebug);
+      }
       requestAnimationFrame(updateDebug);
     }
-    requestAnimationFrame(updateDebug);
 
     gameLoop.start();
     console.log('TrenchWars client started (local-only)');

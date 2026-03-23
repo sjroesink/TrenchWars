@@ -191,7 +191,12 @@ export class GameServer {
       }
     }
 
-    // 5. Broadcast snapshot every SNAPSHOT_RATE ticks (20Hz)
+    // 5. Cleanup expired disconnected players every 100 ticks
+    if (this.tickCount % 100 === 0) {
+      this.playerManager.cleanupDisconnected(this.tickCount);
+    }
+
+    // 6. Broadcast snapshot every SNAPSHOT_RATE ticks (20Hz)
     if (this.tickCount % SNAPSHOT_RATE === 0) {
       this.broadcastSnapshot();
     }
@@ -210,7 +215,7 @@ export class GameServer {
         const msg = JSON.parse(data.toString());
         switch (msg.type) {
           case ClientMsg.JOIN:
-            playerId = this.handleJoin(ws, msg.name, msg.shipType ?? 0);
+            playerId = this.handleJoin(ws, msg.name, msg.shipType ?? 0, msg.sessionToken as string | undefined);
             break;
           case ClientMsg.INPUT:
             if (playerId) this.handleInput(playerId, msg);
@@ -243,17 +248,52 @@ export class GameServer {
   }
 
   /**
-   * Handle JOIN message: create player, send WELCOME, broadcast PLAYER_JOIN.
+   * Handle JOIN message: reconnect if session token matches, otherwise create new player.
    */
-  private handleJoin(ws: WebSocket, name: string, shipType: number): string {
-    const playerId = crypto.randomUUID();
+  private handleJoin(ws: WebSocket, name: string, shipType: number, sessionToken?: string): string {
+    // Attempt reconnection if a session token was provided
+    if (sessionToken) {
+      const restored = this.playerManager.restorePlayer(sessionToken, this.tickCount);
+      if (restored) {
+        const playerId = restored.id;
 
-    // Cancel pending disconnect timer if reconnecting
-    const timer = this.disconnectTimers.get(playerId);
-    if (timer) {
-      clearTimeout(timer);
-      this.disconnectTimers.delete(playerId);
+        // Cancel pending disconnect timer
+        const timer = this.disconnectTimers.get(playerId);
+        if (timer) {
+          clearTimeout(timer);
+          this.disconnectTimers.delete(playerId);
+        }
+
+        this.clients.set(playerId, ws);
+        if (!this.inputQueues.has(playerId)) {
+          this.inputQueues.set(playerId, []);
+        }
+
+        // Send WELCOME with existing state
+        this.send(ws, {
+          type: ServerMsg.WELCOME,
+          playerId,
+          tick: this.tickCount,
+          mapWidth: this.map.width,
+          mapHeight: this.map.height,
+          sessionToken: restored.sessionToken,
+          reconnected: true,
+        });
+
+        // Broadcast PLAYER_JOIN so other clients know they're back
+        this.broadcast({
+          type: ServerMsg.PLAYER_JOIN,
+          playerId,
+          name: restored.name,
+          shipType: restored.shipType,
+        });
+
+        return playerId;
+      }
+      // Token invalid or expired — fall through to new player creation
     }
+
+    const playerId = crypto.randomUUID();
 
     const player = this.playerManager.addPlayer(playerId, name, shipType);
     const spawnPos = this.playerManager.findSpawnPosition(this.map, SHIP_CONFIGS[shipType].radius);
@@ -263,13 +303,14 @@ export class GameServer {
     this.clients.set(playerId, ws);
     this.inputQueues.set(playerId, []);
 
-    // Send WELCOME to the joining player
+    // Send WELCOME to the joining player (includes session token for future reconnects)
     this.send(ws, {
       type: ServerMsg.WELCOME,
       playerId,
       tick: this.tickCount,
       mapWidth: this.map.width,
       mapHeight: this.map.height,
+      sessionToken: player.sessionToken,
     });
 
     // Broadcast PLAYER_JOIN to all other clients
@@ -310,17 +351,20 @@ export class GameServer {
   }
 
   /**
-   * Handle player disconnect: broadcast PLAYER_LEAVE, schedule removal.
+   * Handle player disconnect: hold slot for reconnection, broadcast PLAYER_LEAVE, schedule cleanup.
    */
   private onDisconnect(playerId: string): void {
     this.clients.delete(playerId);
+
+    // Hold the player slot for potential reconnection
+    this.playerManager.holdPlayer(playerId, this.tickCount);
 
     this.broadcast({
       type: ServerMsg.PLAYER_LEAVE,
       playerId,
     });
 
-    // Schedule removal after RECONNECT_TIMEOUT (in ms, converting from ticks at 100Hz)
+    // Schedule full removal after RECONNECT_TIMEOUT (in ms, converting from ticks at 100Hz)
     const timeoutMs = (RECONNECT_TIMEOUT / TICK_RATE) * 1000;
     this.disconnectTimers.set(playerId, setTimeout(() => {
       this.playerManager.removePlayer(playerId);

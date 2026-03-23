@@ -80,6 +80,8 @@ export interface PlayerState {
   deaths: number;
   lastProcessedSeq: number;  // for client reconciliation
   respawnTick: number;       // tick when respawn is allowed (0 = active)
+  sessionToken: string;      // for reconnection (generated server-side)
+  disconnectedAt: number;    // tick when disconnected (0 = connected)
 }
 
 export interface GameSnapshot {
