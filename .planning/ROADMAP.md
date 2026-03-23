@@ -98,5 +98,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 7/7 | Complete   | 2026-03-23 |
-| 3. Game Experience | 0/5 | Not started | - |
+| 3. Game Experience | 3/5 | In Progress|  |
 | 4. Production Launch | 0/1 | Not started | - |
