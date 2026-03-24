@@ -4,8 +4,10 @@
   "type": "module",
   "main": "src/main.ts",
   "dependencies": {
-    "ws": "^8.20.0",
-    "@trench-wars/shared": "*"
+    "@fails-components/webtransport": "^1.5.3",
+    "@fails-components/webtransport-transport-http3-quiche": "^1.5.3",
+    "@trench-wars/shared": "*",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",

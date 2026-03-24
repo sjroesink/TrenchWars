@@ -2,16 +2,21 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { RoomManager } from '../room-manager';
 import { generateTestArena } from '@trench-wars/shared';
 import type { TileMap } from '@trench-wars/shared';
-import { WebSocket } from 'ws';
+import type { ClientConnection } from '../transport/client-connection';
 
-// Create a minimal mock WebSocket for testing (no real connection needed)
-function createMockWs(): WebSocket {
+// Create a minimal mock ClientConnection for testing
+function createMockConn(): ClientConnection {
   return {
-    readyState: WebSocket.OPEN,
-    send: () => {},
-    on: () => {},
+    id: crypto.randomUUID(),
+    isOpen: true,
+    sendReliable: () => {},
+    sendUnreliable: () => {},
+    onMessage: () => {},
+    onDatagram: () => {},
+    onClose: () => {},
+    onError: () => {},
     close: () => {},
-  } as unknown as WebSocket;
+  };
 }
 
 describe('RoomManager', () => {
@@ -55,7 +60,7 @@ describe('RoomManager', () => {
     });
 
     it('player count updates after assignment', () => {
-      const ws = createMockWs();
+      const ws = createMockConn();
       manager.assignPlayer('arena-1', 'p1', 'Alice', 0, ws);
 
       const rooms = manager.getRoomList();
@@ -66,7 +71,7 @@ describe('RoomManager', () => {
 
   describe('player assignment', () => {
     it('assignPlayer adds player to specified room', () => {
-      const ws = createMockWs();
+      const ws = createMockConn();
       const room = manager.assignPlayer('arena-1', 'p1', 'Alice', 0, ws);
 
       expect(room).not.toBeNull();
@@ -75,7 +80,7 @@ describe('RoomManager', () => {
     });
 
     it('assignPlayer returns null for non-existent room', () => {
-      const ws = createMockWs();
+      const ws = createMockConn();
       const room = manager.assignPlayer('no-such-room', 'p1', 'Alice', 0, ws);
       expect(room).toBeNull();
     });
@@ -83,19 +88,19 @@ describe('RoomManager', () => {
     it('assignPlayer returns null when room is full', () => {
       // Fill room to capacity (20 players)
       for (let i = 0; i < 20; i++) {
-        const ws = createMockWs();
+        const ws = createMockConn();
         const result = manager.assignPlayer('arena-1', `p${i}`, `Player${i}`, 0, ws);
         expect(result).not.toBeNull();
       }
 
       // 21st player should be rejected
-      const ws = createMockWs();
+      const ws = createMockConn();
       const result = manager.assignPlayer('arena-1', 'p-overflow', 'Overflow', 0, ws);
       expect(result).toBeNull();
     });
 
     it('autoAssignPlayer assigns to first non-full room', () => {
-      const ws = createMockWs();
+      const ws = createMockConn();
       const room = manager.autoAssignPlayer('p1', 'Alice', 0, ws);
 
       expect(room).not.toBeNull();
@@ -105,7 +110,7 @@ describe('RoomManager', () => {
 
   describe('player removal', () => {
     it('removePlayer removes from correct room', () => {
-      const ws = createMockWs();
+      const ws = createMockConn();
       manager.assignPlayer('arena-1', 'p1', 'Alice', 0, ws);
 
       // Verify player exists
@@ -129,8 +134,8 @@ describe('RoomManager', () => {
 
   describe('cross-room isolation', () => {
     it('players in different rooms are independent', () => {
-      const ws1 = createMockWs();
-      const ws2 = createMockWs();
+      const ws1 = createMockConn();
+      const ws2 = createMockConn();
 
       // Add players to different rooms
       manager.assignPlayer('arena-1', 'p1', 'Alice', 0, ws1);
@@ -151,8 +156,8 @@ describe('RoomManager', () => {
     });
 
     it('removing a player from one room does not affect another', () => {
-      const ws1 = createMockWs();
-      const ws2 = createMockWs();
+      const ws1 = createMockConn();
+      const ws2 = createMockConn();
 
       manager.assignPlayer('arena-1', 'p1', 'Alice', 0, ws1);
       manager.assignPlayer('arena-2', 'p2', 'Bob', 1, ws2);

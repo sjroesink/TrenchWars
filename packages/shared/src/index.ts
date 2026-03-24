@@ -22,3 +22,13 @@ export {
   createBullet, createBomb, createMultifire, updateProjectile,
   checkProjectileHit, calculateBombDamage,
 } from './weapons';
+export {
+  BinaryMsg,
+  encodeInput, decodeInput,
+  encodeSnapshotPlayers, decodeSnapshotPlayers,
+  encodeSnapshotProjectiles, decodeSnapshotProjectiles,
+  encodePing, decodePing,
+  encodePong, decodePong,
+  MAX_DATAGRAM_SIZE, fitsInDatagram, readBinaryMsgType,
+} from './binary-codec';
+export type { BinaryInput, SnapshotPlayer, SnapshotProjectile } from './binary-codec';

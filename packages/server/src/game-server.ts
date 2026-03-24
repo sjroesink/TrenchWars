@@ -1,10 +1,17 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 import type { TileMap } from '@trench-wars/shared';
 import {
   ClientMsg,
   ServerMsg,
+  decodeInput,
+  decodePing,
+  encodePong,
+  readBinaryMsgType,
+  BinaryMsg,
 } from '@trench-wars/shared';
 import { RoomManager } from './room-manager';
+import type { ClientConnection } from './transport/client-connection';
+import { WsConnection } from './transport/ws-connection';
 
 export interface GameServerOptions {
   map: TileMap;
@@ -40,7 +47,7 @@ export class GameServer {
     } else {
       this.wss = new WebSocketServer({ port: this.port });
     }
-    this.wss.on('connection', (ws) => this.onConnection(ws));
+    this.wss.on('connection', (ws) => this.onWsConnection(ws));
     this.roomManager.startAll();
 
     // Log room info
@@ -62,22 +69,30 @@ export class GameServer {
   }
 
   /**
-   * Handle a new WebSocket connection.
+   * Handle a new WebSocket connection by wrapping it in a ClientConnection.
    */
-  private onConnection(ws: WebSocket): void {
+  private onWsConnection(ws: import('ws').WebSocket): void {
+    this.handleConnection(new WsConnection(ws));
+  }
+
+  /**
+   * Handle a new transport-agnostic connection.
+   */
+  handleConnection(conn: ClientConnection): void {
     let playerId: string | null = null;
 
-    ws.on('message', (data) => {
+    // Reliable (JSON) message handler
+    conn.onMessage((data) => {
       try {
-        const msg = JSON.parse(data.toString());
+        const msg = JSON.parse(data);
         switch (msg.type) {
           case ClientMsg.ROOM_LIST:
-            this.handleRoomList(ws);
+            this.handleRoomList(conn);
             break;
 
           case ClientMsg.JOIN:
             playerId = this.handleJoin(
-              ws,
+              conn,
               msg.name,
               msg.shipType ?? 0,
               msg.roomId as string | undefined,
@@ -107,13 +122,11 @@ export class GameServer {
             break;
 
           case ClientMsg.PING:
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({
-                type: ServerMsg.PONG,
-                clientTime: msg.clientTime,
-                serverTime: Date.now(),
-              }));
-            }
+            conn.sendReliable(JSON.stringify({
+              type: ServerMsg.PONG,
+              clientTime: msg.clientTime,
+              serverTime: Date.now(),
+            }));
             break;
         }
       } catch {
@@ -121,14 +134,47 @@ export class GameServer {
       }
     });
 
-    ws.on('close', () => {
+    // Unreliable (binary) datagram handler
+    conn.onDatagram((data) => {
+      try {
+        const msgType = readBinaryMsgType(data);
+        switch (msgType) {
+          case BinaryMsg.INPUT: {
+            if (playerId) {
+              const input = decodeInput(data);
+              const room = this.roomManager.getPlayerRoom(playerId);
+              if (room) {
+                room.handleInput(playerId, {
+                  seq: input.seq,
+                  tick: input.tick,
+                  input: input.input,
+                  fire: input.fire,
+                  fireBomb: input.fireBomb,
+                  multifire: input.multifire,
+                });
+              }
+            }
+            break;
+          }
+          case BinaryMsg.PING: {
+            const ping = decodePing(data);
+            conn.sendUnreliable(encodePong(ping.clientTime, Date.now()));
+            break;
+          }
+        }
+      } catch {
+        // Ignore malformed datagrams
+      }
+    });
+
+    conn.onClose(() => {
       if (playerId) {
         this.roomManager.removePlayer(playerId);
         playerId = null;
       }
     });
 
-    ws.on('error', () => {
+    conn.onError(() => {
       // Connection errors handled by close event
     });
   }
@@ -136,21 +182,19 @@ export class GameServer {
   /**
    * Send room list to a client.
    */
-  private handleRoomList(ws: WebSocket): void {
+  private handleRoomList(conn: ClientConnection): void {
     const rooms = this.roomManager.getRoomList();
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: ServerMsg.ROOM_LIST,
-        rooms,
-      }));
-    }
+    conn.sendReliable(JSON.stringify({
+      type: ServerMsg.ROOM_LIST,
+      rooms,
+    }));
   }
 
   /**
    * Handle JOIN message: reconnect or create new player in specified (or auto) room.
    */
   private handleJoin(
-    ws: WebSocket,
+    conn: ClientConnection,
     name: string,
     shipType: number,
     roomId?: string,
@@ -158,12 +202,12 @@ export class GameServer {
   ): string | null {
     // Attempt reconnection if session token provided
     if (sessionToken) {
-      const result = this.roomManager.restorePlayer(sessionToken, ws);
+      const result = this.roomManager.restorePlayer(sessionToken, conn);
       if (result) {
         const { room, player } = result;
         const mapInfo = room.getMapInfo();
 
-        room.send(ws, {
+        room.send(conn, {
           type: ServerMsg.WELCOME,
           playerId: player.id,
           tick: room.getTickCount(),
@@ -192,17 +236,15 @@ export class GameServer {
     // Assign to specified room or auto-assign
     let room;
     if (roomId) {
-      room = this.roomManager.assignPlayer(roomId, playerId, name, shipType, ws);
+      room = this.roomManager.assignPlayer(roomId, playerId, name, shipType, conn);
     } else {
-      room = this.roomManager.autoAssignPlayer(playerId, name, shipType, ws);
+      room = this.roomManager.autoAssignPlayer(playerId, name, shipType, conn);
     }
 
     if (!room) {
       // All rooms full — notify and close
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'error', message: 'All rooms are full' }));
-        ws.close();
-      }
+      conn.sendReliable(JSON.stringify({ type: 'error', message: 'All rooms are full' }));
+      conn.close();
       return null;
     }
 
@@ -210,7 +252,7 @@ export class GameServer {
     if (!player) return null;
 
     const mapInfo = room.getMapInfo();
-    room.send(ws, {
+    room.send(conn, {
       type: ServerMsg.WELCOME,
       playerId,
       tick: room.getTickCount(),

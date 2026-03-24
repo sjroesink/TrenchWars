@@ -1,4 +1,3 @@
-import { WebSocket } from 'ws';
 import type { TileMap, ShipInput, GameSnapshot, RoomInfo } from '@trench-wars/shared';
 import {
   TICK_RATE,
@@ -12,7 +11,11 @@ import {
   applyWallCollision,
   ClientMsg,
   ServerMsg,
+  encodeSnapshotPlayers,
+  encodeSnapshotProjectiles,
+  fitsInDatagram,
 } from '@trench-wars/shared';
+import type { ClientConnection } from './transport/client-connection';
 import { PlayerManager } from './player-manager';
 import { WeaponManager } from './weapon-manager';
 import { LagCompensation } from './lag-compensation';
@@ -68,7 +71,7 @@ export class ArenaRoom {
   private lastTime = 0n;
   private loopTimer: ReturnType<typeof setInterval> | null = null;
 
-  private clients = new Map<string, WebSocket>();
+  private clients = new Map<string, ClientConnection>();
   private inputQueues = new Map<string, QueuedInput[]>();
   private disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -128,7 +131,7 @@ export class ArenaRoom {
   /**
    * Add a player to this room. Returns the PlayerState, or null if room is full.
    */
-  addPlayer(playerId: string, name: string, shipType: number, ws: WebSocket): import('@trench-wars/shared').PlayerState | null {
+  addPlayer(playerId: string, name: string, shipType: number, conn: ClientConnection): import('@trench-wars/shared').PlayerState | null {
     if (this.isFull()) return null;
 
     const player = this.playerManager.addPlayer(playerId, name, shipType);
@@ -137,7 +140,7 @@ export class ArenaRoom {
     player.ship.y = spawnPos.y;
 
     this.gameMode.onPlayerJoin(playerId, name, shipType);
-    this.clients.set(playerId, ws);
+    this.clients.set(playerId, conn);
     this.inputQueues.set(playerId, []);
 
     return player;
@@ -146,7 +149,7 @@ export class ArenaRoom {
   /**
    * Restore a reconnecting player. Returns the PlayerState or null.
    */
-  restorePlayer(sessionToken: string, ws: WebSocket): import('@trench-wars/shared').PlayerState | null {
+  restorePlayer(sessionToken: string, conn: ClientConnection): import('@trench-wars/shared').PlayerState | null {
     const restored = this.playerManager.restorePlayer(sessionToken, this.tickCount);
     if (!restored) return null;
 
@@ -159,7 +162,7 @@ export class ArenaRoom {
       this.disconnectTimers.delete(playerId);
     }
 
-    this.clients.set(playerId, ws);
+    this.clients.set(playerId, conn);
     if (!this.inputQueues.has(playerId)) {
       this.inputQueues.set(playerId, []);
     }
@@ -261,10 +264,8 @@ export class ArenaRoom {
   /**
    * Send a message to a specific client in this room.
    */
-  send(ws: WebSocket, msg: Record<string, unknown>): void {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(msg));
-    }
+  send(conn: ClientConnection, msg: Record<string, unknown>): void {
+    conn.sendReliable(JSON.stringify(msg));
   }
 
   /**
@@ -272,10 +273,18 @@ export class ArenaRoom {
    */
   broadcast(msg: Record<string, unknown>): void {
     const data = JSON.stringify(msg);
-    for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data);
-      }
+    for (const conn of this.clients.values()) {
+      conn.sendReliable(data);
+    }
+  }
+
+  /**
+   * Broadcast binary data unreliably to all connected clients.
+   * Falls back to reliable if the transport doesn't support datagrams.
+   */
+  broadcastUnreliable(data: Uint8Array): void {
+    for (const conn of this.clients.values()) {
+      conn.sendUnreliable(data);
     }
   }
 
@@ -392,40 +401,40 @@ export class ArenaRoom {
     const players = this.playerManager.getAllPlayers();
     const projectiles = this.weaponManager.getProjectiles();
 
-    const snapshot: GameSnapshot = {
-      tick: this.tickCount,
-      players: players.map(p => ({
-        id: p.id,
-        name: p.name,
-        x: p.ship.x,
-        y: p.ship.y,
-        vx: p.ship.vx,
-        vy: p.ship.vy,
-        orientation: p.ship.orientation,
-        energy: p.ship.energy,
-        shipType: p.shipType,
-        alive: p.alive,
-        kills: p.kills,
-        deaths: p.deaths,
-        lastProcessedSeq: p.lastProcessedSeq,
-      })),
-      projectiles: projectiles.map(pr => ({
-        id: pr.id,
-        type: pr.type,
-        x: pr.x,
-        y: pr.y,
-        vx: pr.vx,
-        vy: pr.vy,
-        ownerId: pr.ownerId,
-        rear: pr.rear,
-      })),
-    };
+    const snapshotPlayers = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      x: p.ship.x,
+      y: p.ship.y,
+      vx: p.ship.vx,
+      vy: p.ship.vy,
+      orientation: p.ship.orientation,
+      energy: p.ship.energy,
+      shipType: p.shipType,
+      alive: p.alive,
+      kills: p.kills,
+      deaths: p.deaths,
+      lastProcessedSeq: p.lastProcessedSeq,
+    }));
 
-    const msg = JSON.stringify({ type: ServerMsg.SNAPSHOT, ...snapshot });
-    for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg);
-      }
-    }
+    const snapshotProjectiles = projectiles.map(pr => ({
+      id: pr.id,
+      type: pr.type,
+      x: pr.x,
+      y: pr.y,
+      vx: pr.vx,
+      vy: pr.vy,
+      ownerId: pr.ownerId,
+      rear: pr.rear,
+    }));
+
+    // Send snapshot as reliable JSON for now
+    // TODO: use binary datagrams when server→client datagram support is stable
+    this.broadcast({
+      type: ServerMsg.SNAPSHOT,
+      tick: this.tickCount,
+      players: snapshotPlayers,
+      projectiles: snapshotProjectiles,
+    });
   }
 }

@@ -19,15 +19,23 @@ import { SoundManager } from './audio/sound-manager';
 import { ShipSpriteManager } from './sprites/ship-sprites';
 import type { GameModeState, FFAState, RoomInfo } from '@trench-wars/shared';
 
-/** Server WebSocket URL (configurable via query param or default) */
-function getServerUrl(): string {
+/** Server URLs (configurable via query param or default) */
+function getServerUrls(): { ws: string; wt: string } {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('server')) return params.get('server')!;
-  // Dev mode (Vite on 9010): connect to separate server
-  if (window.location.port === '9010') return 'ws://localhost:9020';
-  // Production: WebSocket on same host as page (wss:// if https://)
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${window.location.host}`;
+  if (params.get('server')) {
+    return { ws: params.get('server')!, wt: '' };
+  }
+  // Dev mode (Vite on 9010/9011): connect to separate server
+  if (window.location.port === '9010' || window.location.port === '9011') {
+    return {
+      ws: 'wss://127.0.0.1:9020',
+      wt: 'https://127.0.0.1:9020/game', // Same port — HTTP/3 on UDP, HTTPS on TCP
+    };
+  }
+  // Production: WebSocket and WebTransport on same host/port
+  const wsUrl = `wss://${window.location.host}`;
+  const wtUrl = `https://${window.location.host}/game`;
+  return { ws: wsUrl, wt: wtUrl };
 }
 
 async function main(): Promise<void> {
@@ -94,7 +102,7 @@ async function main(): Promise<void> {
   );
 
   // Attempt server connection
-  const serverUrl = getServerUrl();
+  const { ws: wsUrl, wt: wtUrl } = getServerUrls();
   let network: NetworkClient | undefined;
   let prediction: PredictionManager | undefined;
   let playerId: string | undefined;
@@ -274,8 +282,8 @@ async function main(): Promise<void> {
     });
 
     networkRef = network;
-    await network.connect(serverUrl);
-    console.log(`Connected to ${serverUrl}`);
+    await network.connect(wsUrl, wtUrl);
+    console.log(`Connected to server (${network.isWebTransport() ? 'WebTransport' : 'WebSocket'})`);
 
     // Request room list and wait for response
     const roomListPromise = new Promise<RoomInfo[]>((resolve) => {

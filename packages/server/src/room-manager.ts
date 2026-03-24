@@ -1,5 +1,5 @@
-import { WebSocket } from 'ws';
 import type { TileMap, RoomInfo } from '@trench-wars/shared';
+import type { ClientConnection } from './transport/client-connection';
 import { ArenaRoom } from './arena-room';
 import { FFAMode } from './game-modes/ffa-mode';
 
@@ -64,12 +64,12 @@ export class RoomManager {
     playerId: string,
     name: string,
     shipType: number,
-    ws: WebSocket,
+    conn: ClientConnection,
   ): ArenaRoom | null {
     const room = this.rooms.get(roomId);
     if (!room) return null;
 
-    const player = room.addPlayer(playerId, name, shipType, ws);
+    const player = room.addPlayer(playerId, name, shipType, conn);
     if (!player) return null;
 
     this.playerRoomMap.set(playerId, roomId);
@@ -84,11 +84,11 @@ export class RoomManager {
     playerId: string,
     name: string,
     shipType: number,
-    ws: WebSocket,
+    conn: ClientConnection,
   ): ArenaRoom | null {
     for (const room of this.rooms.values()) {
       if (!room.isFull()) {
-        const player = room.addPlayer(playerId, name, shipType, ws);
+        const player = room.addPlayer(playerId, name, shipType, conn);
         if (player) {
           this.playerRoomMap.set(playerId, room.id);
           return room;
@@ -104,10 +104,10 @@ export class RoomManager {
    */
   restorePlayer(
     sessionToken: string,
-    ws: WebSocket,
+    conn: ClientConnection,
   ): { room: ArenaRoom; player: import('@trench-wars/shared').PlayerState } | null {
     for (const room of this.rooms.values()) {
-      const player = room.restorePlayer(sessionToken, ws);
+      const player = room.restorePlayer(sessionToken, conn);
       if (player) {
         this.playerRoomMap.set(player.id, room.id);
         return { room, player };

@@ -1,6 +1,18 @@
 import { ClientMsg, ServerMsg } from '@trench-wars/shared';
+import {
+  BinaryMsg,
+  encodeInput,
+  encodePing,
+  decodePong,
+  decodeSnapshotPlayers,
+  decodeSnapshotProjectiles,
+  readBinaryMsgType,
+} from '@trench-wars/shared';
 import type { ShipInput, GameSnapshot, RoomInfo } from '@trench-wars/shared';
 import type { GameModeState } from '@trench-wars/shared';
+import type { TransportAdapter } from './transport/transport-adapter';
+import { WsAdapter } from './transport/ws-adapter';
+import { WtAdapter } from './transport/wt-adapter';
 
 export type ServerMessageHandler = {
   onWelcome: (data: { playerId: string; tick: number; mapName: string; sessionToken?: string; reconnected?: boolean }) => void;
@@ -19,39 +31,72 @@ export type ServerMessageHandler = {
 };
 
 export class NetworkClient {
-  private ws: WebSocket | null = null;
+  private transport: TransportAdapter | null = null;
   private handlers: ServerMessageHandler;
   private connected = false;
-  private serverUrl = '';
+  private wsUrl = '';
+  private wtUrl = '';
   private sessionToken: string | null = null;
   private playerName = '';
   private shipType = 0;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 3;
   private reconnecting = false;
+  private usingWebTransport = false;
+
+  /** Partial snapshot state: players and projectiles arrive as separate datagrams. */
+  private pendingSnapshotTick = -1;
+  private pendingPlayers: GameSnapshot['players'] = [];
+  private pendingProjectiles: GameSnapshot['projectiles'] = [];
+  /** Player name cache (binary snapshots omit names). */
+  private playerNames = new Map<string, string>();
 
   constructor(handlers: ServerMessageHandler) {
     this.handlers = handlers;
   }
 
-  connect(url: string): Promise<void> {
-    this.serverUrl = url;
-    return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(url);
-      this.ws.onopen = () => {
+  async connect(wsUrl: string, wtUrl?: string): Promise<void> {
+    this.wsUrl = wsUrl;
+    this.wtUrl = wtUrl || '';
+
+    // Try WebTransport first if supported and URL provided
+    if (this.wtUrl && typeof globalThis.WebTransport !== 'undefined') {
+      try {
+        const adapter = new WtAdapter();
+        await adapter.connect(this.wtUrl);
+        this.transport = adapter;
+        this.usingWebTransport = true;
+        this.setupHandlers();
         this.connected = true;
-        resolve();
-      };
-      this.ws.onerror = (e) => reject(e);
-      this.ws.onmessage = (event) => this.handleMessage(event.data as string);
-      this.ws.onclose = () => {
-        const wasConnected = this.connected;
-        this.connected = false;
-        if (wasConnected && this.sessionToken) {
-          this.handlers.onDisconnect?.();
-          this.attemptReconnect();
-        }
-      };
+        console.log('Connected via WebTransport');
+        return;
+      } catch (err) {
+        console.warn('WebTransport unavailable, falling back to WebSocket:', err);
+      }
+    }
+
+    // WebSocket fallback
+    const adapter = new WsAdapter();
+    await adapter.connect(wsUrl);
+    this.transport = adapter;
+    this.usingWebTransport = false;
+    this.setupHandlers();
+    this.connected = true;
+    console.log('Connected via WebSocket');
+  }
+
+  private setupHandlers(): void {
+    if (!this.transport) return;
+
+    this.transport.onMessage((data) => this.handleMessage(data));
+    this.transport.onDatagram((data) => this.handleDatagram(data));
+    this.transport.onClose(() => {
+      const wasConnected = this.connected;
+      this.connected = false;
+      if (wasConnected && this.sessionToken) {
+        this.handlers.onDisconnect?.();
+        this.attemptReconnect();
+      }
     });
   }
 
@@ -65,8 +110,13 @@ export class NetworkClient {
     return this.sessionToken;
   }
 
+  /** Whether the client is using WebTransport (true) or WebSocket (false). */
+  isWebTransport(): boolean {
+    return this.usingWebTransport;
+  }
+
   requestRoomList(): void {
-    this.send({ type: ClientMsg.ROOM_LIST });
+    this.sendReliable({ type: ClientMsg.ROOM_LIST });
   }
 
   sendJoin(name: string, shipType: number, sessionToken?: string, roomId?: string): void {
@@ -79,23 +129,31 @@ export class NetworkClient {
     if (roomId) {
       msg.roomId = roomId;
     }
-    this.send(msg);
+    this.sendReliable(msg);
   }
 
   sendInput(seq: number, tick: number, input: ShipInput, fire: boolean, fireBomb: boolean, multifire: boolean): void {
-    this.send({ type: ClientMsg.INPUT, seq, tick, input, fire, fireBomb, multifire });
+    // Send as binary datagram (unreliable)
+    const data = encodeInput({ seq, tick, input, fire, fireBomb, multifire });
+    if (this.transport && this.connected) {
+      this.transport.sendUnreliable(data);
+    }
   }
 
   sendShipSelect(shipType: number): void {
-    this.send({ type: ClientMsg.SHIP_SELECT, shipType });
+    this.sendReliable({ type: ClientMsg.SHIP_SELECT, shipType });
   }
 
   sendPing(): void {
-    this.send({ type: ClientMsg.PING, clientTime: Date.now() });
+    // Send as binary datagram (unreliable)
+    const data = encodePing(Date.now());
+    if (this.transport && this.connected) {
+      this.transport.sendUnreliable(data);
+    }
   }
 
   sendChat(message: string): void {
-    this.send({ type: ClientMsg.CHAT, message });
+    this.sendReliable({ type: ClientMsg.CHAT, message });
   }
 
   isConnected(): boolean {
@@ -103,9 +161,9 @@ export class NetworkClient {
   }
 
   disconnect(): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.transport) {
+      this.transport.close();
+      this.transport = null;
       this.connected = false;
     }
   }
@@ -114,7 +172,7 @@ export class NetworkClient {
    * Send a reconnect (JOIN with session token) to the server.
    */
   sendReconnect(sessionToken: string): void {
-    this.send({ type: ClientMsg.JOIN, name: this.playerName, shipType: this.shipType, sessionToken });
+    this.sendReliable({ type: ClientMsg.JOIN, name: this.playerName, shipType: this.shipType, sessionToken });
   }
 
   /**
@@ -127,41 +185,53 @@ export class NetworkClient {
     this.reconnecting = true;
     this.reconnectAttempts++;
 
-    setTimeout(() => {
-      if (!this.sessionToken || !this.serverUrl) {
+    setTimeout(async () => {
+      if (!this.sessionToken || !this.wsUrl) {
         this.reconnecting = false;
         return;
       }
 
-      const ws = new WebSocket(this.serverUrl);
-      ws.onopen = () => {
-        this.ws = ws;
+      try {
+        // Try WebTransport first on reconnect too
+        if (this.wtUrl && typeof globalThis.WebTransport !== 'undefined') {
+          try {
+            const adapter = new WtAdapter();
+            await adapter.connect(this.wtUrl);
+            this.transport = adapter;
+            this.usingWebTransport = true;
+            this.setupHandlers();
+            this.connected = true;
+            this.reconnecting = false;
+            this.reconnectAttempts = 0;
+            this.sendReconnect(this.sessionToken!);
+            this.handlers.onReconnect?.();
+            return;
+          } catch {
+            // Fall through to WebSocket
+          }
+        }
+
+        // WebSocket fallback
+        const adapter = new WsAdapter();
+        await adapter.connect(this.wsUrl);
+        this.transport = adapter;
+        this.usingWebTransport = false;
+        this.setupHandlers();
         this.connected = true;
         this.reconnecting = false;
         this.reconnectAttempts = 0;
-        ws.onmessage = (event) => this.handleMessage(event.data as string);
-        ws.onclose = () => {
-          const wasConnected = this.connected;
-          this.connected = false;
-          if (wasConnected && this.sessionToken) {
-            this.handlers.onDisconnect?.();
-            this.attemptReconnect();
-          }
-        };
-        // Send JOIN with session token for reconnection
         this.sendReconnect(this.sessionToken!);
         this.handlers.onReconnect?.();
-      };
-      ws.onerror = () => {
+      } catch {
         this.reconnecting = false;
         this.attemptReconnect();
-      };
+      }
     }, 2000);
   }
 
-  private send(msg: object): void {
-    if (this.ws && this.connected) {
-      this.ws.send(JSON.stringify(msg));
+  private sendReliable(msg: object): void {
+    if (this.transport && this.connected) {
+      this.transport.sendReliable(JSON.stringify(msg));
     }
   }
 
@@ -172,12 +242,16 @@ export class NetworkClient {
         this.handlers.onWelcome(msg);
         break;
       case ServerMsg.SNAPSHOT:
+        // JSON fallback snapshot (when binary datagram was too large)
         this.handlers.onSnapshot(msg);
         break;
       case ServerMsg.PLAYER_JOIN:
+        // Cache player name for binary snapshot reconstruction
+        this.playerNames.set(msg.playerId, msg.name);
         this.handlers.onPlayerJoin(msg);
         break;
       case ServerMsg.PLAYER_LEAVE:
+        this.playerNames.delete(msg.playerId);
         this.handlers.onPlayerLeave(msg);
         break;
       case ServerMsg.DEATH:
@@ -187,6 +261,7 @@ export class NetworkClient {
         this.handlers.onSpawn(msg);
         break;
       case ServerMsg.PONG:
+        // JSON fallback PONG (from WebSocket reliable path)
         this.handlers.onPong(msg);
         break;
       case ServerMsg.SCORE_UPDATE:
@@ -201,6 +276,85 @@ export class NetworkClient {
       case ServerMsg.ROOM_LIST:
         this.handlers.onRoomList?.(msg);
         break;
+    }
+  }
+
+  private _dgCount = 0;
+  private handleDatagram(data: Uint8Array): void {
+    if (this._dgCount++ < 5) console.log(`[WT] datagram received: type=0x${data[0].toString(16)}, len=${data.length}`);
+    const msgType = readBinaryMsgType(data);
+    switch (msgType) {
+      case BinaryMsg.SNAPSHOT_PLAYERS: {
+        const { tick, players } = decodeSnapshotPlayers(data);
+        // Fill in cached names
+        for (const p of players) {
+          p.name = this.playerNames.get(p.id) || p.name;
+        }
+        this.mergeSnapshotPart(tick, players, null);
+        break;
+      }
+      case BinaryMsg.SNAPSHOT_PROJECTILES: {
+        const { tick, projectiles } = decodeSnapshotProjectiles(data);
+        this.mergeSnapshotPart(tick, null, projectiles);
+        break;
+      }
+      case BinaryMsg.PONG: {
+        const pong = decodePong(data);
+        this.handlers.onPong(pong);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Merge split snapshot datagrams. Players and projectiles arrive separately.
+   * Emit a full snapshot when both parts for the same tick have arrived,
+   * or after the first part if the other never comes (lost datagram).
+   */
+  private pendingHasPlayers = false;
+  private pendingHasProjectiles = false;
+
+  private mergeSnapshotPart(
+    tick: number,
+    players: GameSnapshot['players'] | null,
+    projectiles: GameSnapshot['projectiles'] | null,
+  ): void {
+    if (tick !== this.pendingSnapshotTick) {
+      // New tick — flush any pending incomplete snapshot from previous tick
+      if (this.pendingSnapshotTick >= 0 && this.pendingHasPlayers) {
+        this.handlers.onSnapshot({
+          tick: this.pendingSnapshotTick,
+          players: this.pendingPlayers,
+          projectiles: this.pendingProjectiles,
+        });
+      }
+      this.pendingSnapshotTick = tick;
+      this.pendingPlayers = [];
+      this.pendingProjectiles = [];
+      this.pendingHasPlayers = false;
+      this.pendingHasProjectiles = false;
+    }
+
+    if (players !== null) {
+      this.pendingPlayers = players;
+      this.pendingHasPlayers = true;
+    }
+    if (projectiles !== null) {
+      this.pendingProjectiles = projectiles;
+      this.pendingHasProjectiles = true;
+    }
+
+    // If we have both parts, emit immediately
+    if (this.pendingHasPlayers && this.pendingHasProjectiles) {
+      if (this._dgCount < 10) console.log(`[WT] emit snapshot tick=${tick}, players=${this.pendingPlayers.length}, projectiles=${this.pendingProjectiles.length}`);
+      this.handlers.onSnapshot({
+        tick,
+        players: this.pendingPlayers,
+        projectiles: this.pendingProjectiles,
+      });
+      this.pendingSnapshotTick = -1;
+      this.pendingHasPlayers = false;
+      this.pendingHasProjectiles = false;
     }
   }
 }

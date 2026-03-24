@@ -8,7 +8,6 @@ import {
   SNAPSHOT_RATE,
 } from '@trench-wars/shared';
 import type { TileMap, GameSnapshot } from '@trench-wars/shared';
-import { WebSocket } from 'ws';
 
 describe('Performance benchmarks', () => {
   let map: TileMap;
