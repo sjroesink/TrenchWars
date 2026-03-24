@@ -72,7 +72,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **INFR-01**: Game server hosted publicly and accessible via browser
 - [ ] **INFR-02**: Server supports 20+ concurrent players at 60fps simulation
-- [ ] **INFR-03**: Multiple arena rooms can run simultaneously
+- [x] **INFR-03**: Multiple arena rooms can run simultaneously
 
 ## v2 Requirements
 
@@ -156,7 +156,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | UIEX-08 | Phase 3 | Complete |
 | INFR-01 | Phase 4 | Pending |
 | INFR-02 | Phase 4 | Pending |
-| INFR-03 | Phase 4 | Pending |
+| INFR-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 43 total
