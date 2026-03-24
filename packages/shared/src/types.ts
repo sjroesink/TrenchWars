@@ -93,6 +93,14 @@ export interface PlayerState {
   spectating?: boolean;      // true if player is spectating (no ship, no physics)
 }
 
+export interface RoomInfo {
+  id: string;
+  name: string;
+  playerCount: number;
+  maxPlayers: number;
+  mode: string;
+}
+
 export interface GameSnapshot {
   tick: number;
   players: {

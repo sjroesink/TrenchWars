@@ -1,5 +1,5 @@
 export type { ShipState, ShipInput, ShipConfig, TileMap } from './types';
-export type { WeaponConfig, ProjectileState, PlayerState, GameSnapshot } from './types';
+export type { WeaponConfig, ProjectileState, PlayerState, GameSnapshot, RoomInfo } from './types';
 export { TICK_RATE, TICK_DT, TILE_SIZE, MAP_SIZE, DEFAULT_BOUNCE_FACTOR } from './constants';
 export {
   BULLET_DAMAGE_LEVEL, BOMB_DAMAGE_LEVEL, BULLET_DAMAGE_UPGRADE,

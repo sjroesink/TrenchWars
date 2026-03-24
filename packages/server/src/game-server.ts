@@ -1,240 +1,64 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import type { TileMap, ShipInput, GameSnapshot } from '@trench-wars/shared';
+import type { TileMap } from '@trench-wars/shared';
 import {
-  TICK_RATE,
-  TICK_DT,
-  SNAPSHOT_RATE,
-  RECONNECT_TIMEOUT,
-  SHIP_CONFIGS,
-  SHIP_WEAPONS,
-  DEFAULT_BOUNCE_FACTOR,
-  updateShipPhysics,
-  applyWallCollision,
   ClientMsg,
   ServerMsg,
 } from '@trench-wars/shared';
-import { PlayerManager } from './player-manager';
-import { WeaponManager } from './weapon-manager';
-import { LagCompensation } from './lag-compensation';
-import type { GameMode } from './game-modes/game-mode';
-import { FFAMode } from './game-modes/ffa-mode';
-
-/** Nanoseconds per tick for the 100Hz fixed-timestep loop. */
-const NS_PER_TICK = BigInt(Math.floor(1e9 / TICK_RATE));
-
-/** Neutral input used when a player has no queued inputs. */
-const NEUTRAL_INPUT: ShipInput = {
-  left: false,
-  right: false,
-  thrust: false,
-  reverse: false,
-  afterburner: false, multifire: false,
-};
-
-interface QueuedInput {
-  seq: number;
-  data: ShipInput;
-  fire: boolean;
-  fireBomb: boolean;
-  multifire: boolean;
-}
+import { RoomManager } from './room-manager';
 
 export interface GameServerOptions {
   map: TileMap;
   port: number;
-  gameMode?: GameMode;
   httpServer?: import('http').Server;
 }
 
 /**
- * Authoritative game server.
- * Runs a 100Hz fixed-timestep simulation loop with process.hrtime.bigint().
- * Accepts WebSocket connections, processes player inputs, runs shared physics,
- * simulates weapons, and broadcasts snapshots at 20Hz (every SNAPSHOT_RATE ticks).
+ * Thin WebSocket router. Accepts connections, parses messages,
+ * and delegates game logic to ArenaRoom instances via RoomManager.
  */
 export class GameServer {
   private map: TileMap;
   private port: number;
   private httpServer?: import('http').Server;
-  private tickCount = 0;
-  private accumulator = 0n; // BigInt nanoseconds
-  private lastTime = 0n;
-  private loopTimer: ReturnType<typeof setInterval> | null = null;
   private wss: WebSocketServer | null = null;
-
-  readonly playerManager: PlayerManager;
-  readonly weaponManager: WeaponManager;
-  readonly lagCompensation: LagCompensation;
-  readonly gameMode: GameMode;
-
-  private clients = new Map<string, WebSocket>();
-  private inputQueues = new Map<string, QueuedInput[]>();
-  private disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  readonly roomManager: RoomManager;
 
   constructor(options: GameServerOptions) {
     this.map = options.map;
     this.port = options.port;
     this.httpServer = options.httpServer;
-    this.playerManager = new PlayerManager();
-    this.lagCompensation = new LagCompensation();
-    this.weaponManager = new WeaponManager(this.lagCompensation);
-    this.gameMode = options.gameMode ?? new FFAMode(20);
+    this.roomManager = new RoomManager(this.map);
   }
 
   /**
-   * Start the WebSocket server and game loop.
+   * Start the WebSocket server and all room game loops.
    */
   start(): void {
     if (this.httpServer) {
-      // Attach WebSocket to existing HTTP server (production: single port)
       this.wss = new WebSocketServer({ server: this.httpServer });
       this.httpServer.listen(this.port);
     } else {
-      // Standalone WebSocket server (development)
       this.wss = new WebSocketServer({ port: this.port });
     }
     this.wss.on('connection', (ws) => this.onConnection(ws));
+    this.roomManager.startAll();
 
-    this.lastTime = process.hrtime.bigint();
-    this.loopTimer = setInterval(() => this.update(), 1);
+    // Log room info
+    const rooms = this.roomManager.getRoomList();
+    for (const room of rooms) {
+      console.log(`  Room: ${room.name} (${room.mode}, max ${room.maxPlayers})`);
+    }
   }
 
   /**
-   * Stop the server and clean up.
+   * Stop the server and all rooms.
    */
   stop(): void {
-    if (this.loopTimer) {
-      clearInterval(this.loopTimer);
-      this.loopTimer = null;
-    }
+    this.roomManager.stopAll();
     if (this.wss) {
       this.wss.close();
       this.wss = null;
     }
-    for (const timer of this.disconnectTimers.values()) {
-      clearTimeout(timer);
-    }
-    this.disconnectTimers.clear();
-  }
-
-  /**
-   * Accumulator-based fixed timestep update.
-   * Called from setInterval(1ms). Runs tick() for each accumulated NS_PER_TICK.
-   */
-  private update(): void {
-    const now = process.hrtime.bigint();
-    this.accumulator += now - this.lastTime;
-    this.lastTime = now;
-
-    while (this.accumulator >= NS_PER_TICK) {
-      this.tick();
-      this.accumulator -= NS_PER_TICK;
-    }
-  }
-
-  /**
-   * Single simulation tick at 100Hz.
-   * 1. Process player inputs (or neutral input)
-   * 2. Update weapons (projectile simulation + hit detection)
-   * 3. Check for respawns
-   * 4. Broadcast snapshot every SNAPSHOT_RATE ticks
-   */
-  private tick(): void {
-    const alivePlayers = this.playerManager.getAlivePlayers();
-
-    // Record positions for lag compensation before processing inputs
-    this.lagCompensation.record(
-      this.tickCount,
-      alivePlayers.map(p => ({
-        id: p.id,
-        x: p.ship.x,
-        y: p.ship.y,
-        radius: SHIP_CONFIGS[p.shipType].radius,
-      })),
-    );
-
-    // 1. Process inputs for alive players
-    for (const player of alivePlayers) {
-      const queue = this.inputQueues.get(player.id);
-      const config = SHIP_CONFIGS[player.shipType];
-      const weaponConfig = SHIP_WEAPONS[player.shipType];
-
-      if (queue && queue.length > 0) {
-        const input = queue.shift()!;
-        updateShipPhysics(player.ship, input.data, config, TICK_DT);
-        applyWallCollision(player.ship, TICK_DT, this.map, config.radius, DEFAULT_BOUNCE_FACTOR);
-        player.lastProcessedSeq = input.seq;
-
-        if (input.fire) {
-          this.weaponManager.fireBullet(player, weaponConfig, this.tickCount);
-        }
-        if (input.fireBomb) {
-          this.weaponManager.fireBomb(player, weaponConfig, this.tickCount);
-        }
-        if (input.multifire) {
-          this.weaponManager.fireMultifire(player, weaponConfig, this.tickCount);
-        }
-      } else {
-        // No input queued: still run physics with neutral input for speed clamping
-        updateShipPhysics(player.ship, NEUTRAL_INPUT, config, TICK_DT);
-        applyWallCollision(player.ship, TICK_DT, this.map, config.radius, DEFAULT_BOUNCE_FACTOR);
-      }
-    }
-
-    // 2. Update weapons (movement, collision, hit detection, damage)
-    const kills = this.weaponManager.update(TICK_DT, this.tickCount, this.map, this.playerManager);
-
-    // 3. Broadcast death events and forward kills to game mode
-    for (const kill of kills) {
-      this.broadcast({
-        type: ServerMsg.DEATH,
-        killerId: kill.killerId,
-        killedId: kill.killedId,
-        weaponType: kill.weaponType,
-      });
-
-      const events = this.gameMode.onKill(kill.killerId, kill.killedId, kill.weaponType);
-      for (const event of events) {
-        this.broadcast({ type: ServerMsg.GAME_STATE, event: event.type, ...event.data });
-      }
-    }
-
-    // 4. Check for respawns (gated by game mode)
-    const allPlayers = this.playerManager.getAllPlayers();
-    for (const player of allPlayers) {
-      if (!player.alive && this.tickCount >= player.respawnTick) {
-        if (this.gameMode.canRespawn(player.id)) {
-          if (this.playerManager.respawnPlayer(player.id, this.map, this.tickCount)) {
-            this.broadcast({
-              type: ServerMsg.SPAWN,
-              playerId: player.id,
-              x: player.ship.x,
-              y: player.ship.y,
-            });
-          }
-        }
-      }
-    }
-
-    // 5. Cleanup expired disconnected players every 100 ticks
-    if (this.tickCount % 100 === 0) {
-      this.playerManager.cleanupDisconnected(this.tickCount);
-    }
-
-    // 6. Process game mode tick events
-    const tickEvents = this.gameMode.onTick(this.tickCount);
-    for (const event of tickEvents) {
-      this.broadcast({ type: ServerMsg.GAME_STATE, event: event.type, ...event.data });
-    }
-
-    // 7. Broadcast snapshot every SNAPSHOT_RATE ticks (20Hz)
-    if (this.tickCount % SNAPSHOT_RATE === 0) {
-      this.broadcastSnapshot();
-      // Also broadcast score update alongside snapshot
-      this.broadcast({ type: ServerMsg.SCORE_UPDATE, state: this.gameMode.getState() });
-    }
-
-    this.tickCount++;
   }
 
   /**
@@ -247,24 +71,49 @@ export class GameServer {
       try {
         const msg = JSON.parse(data.toString());
         switch (msg.type) {
+          case ClientMsg.ROOM_LIST:
+            this.handleRoomList(ws);
+            break;
+
           case ClientMsg.JOIN:
-            playerId = this.handleJoin(ws, msg.name, msg.shipType ?? 0, msg.sessionToken as string | undefined);
+            playerId = this.handleJoin(
+              ws,
+              msg.name,
+              msg.shipType ?? 0,
+              msg.roomId as string | undefined,
+              msg.sessionToken as string | undefined,
+            );
             break;
+
           case ClientMsg.INPUT:
-            if (playerId) this.handleInput(playerId, msg);
+            if (playerId) {
+              const room = this.roomManager.getPlayerRoom(playerId);
+              if (room) room.handleInput(playerId, msg);
+            }
             break;
+
           case ClientMsg.SHIP_SELECT:
-            if (playerId) this.handleShipSelect(playerId, msg.shipType);
+            if (playerId) {
+              const room = this.roomManager.getPlayerRoom(playerId);
+              if (room) room.handleShipSelect(playerId, msg.shipType);
+            }
             break;
+
           case ClientMsg.CHAT:
-            if (playerId) this.handleChat(playerId, msg.message as string);
+            if (playerId) {
+              const room = this.roomManager.getPlayerRoom(playerId);
+              if (room) room.handleChat(playerId, msg.message as string);
+            }
             break;
+
           case ClientMsg.PING:
-            this.send(ws, {
-              type: ServerMsg.PONG,
-              clientTime: msg.clientTime,
-              serverTime: Date.now(),
-            });
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: ServerMsg.PONG,
+                clientTime: msg.clientTime,
+                serverTime: Date.now(),
+              }));
+            }
             break;
         }
       } catch {
@@ -274,7 +123,8 @@ export class GameServer {
 
     ws.on('close', () => {
       if (playerId) {
-        this.onDisconnect(playerId);
+        this.roomManager.removePlayer(playerId);
+        playerId = null;
       }
     });
 
@@ -284,81 +134,94 @@ export class GameServer {
   }
 
   /**
-   * Handle JOIN message: reconnect if session token matches, otherwise create new player.
+   * Send room list to a client.
    */
-  private handleJoin(ws: WebSocket, name: string, shipType: number, sessionToken?: string): string {
-    // Attempt reconnection if a session token was provided
+  private handleRoomList(ws: WebSocket): void {
+    const rooms = this.roomManager.getRoomList();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: ServerMsg.ROOM_LIST,
+        rooms,
+      }));
+    }
+  }
+
+  /**
+   * Handle JOIN message: reconnect or create new player in specified (or auto) room.
+   */
+  private handleJoin(
+    ws: WebSocket,
+    name: string,
+    shipType: number,
+    roomId?: string,
+    sessionToken?: string,
+  ): string | null {
+    // Attempt reconnection if session token provided
     if (sessionToken) {
-      const restored = this.playerManager.restorePlayer(sessionToken, this.tickCount);
-      if (restored) {
-        const playerId = restored.id;
+      const result = this.roomManager.restorePlayer(sessionToken, ws);
+      if (result) {
+        const { room, player } = result;
+        const mapInfo = room.getMapInfo();
 
-        // Cancel pending disconnect timer
-        const timer = this.disconnectTimers.get(playerId);
-        if (timer) {
-          clearTimeout(timer);
-          this.disconnectTimers.delete(playerId);
-        }
-
-        this.clients.set(playerId, ws);
-        if (!this.inputQueues.has(playerId)) {
-          this.inputQueues.set(playerId, []);
-        }
-
-        // Notify game mode of rejoin
-        this.gameMode.onPlayerJoin(playerId, restored.name, restored.shipType);
-
-        // Send WELCOME with existing state
-        this.send(ws, {
+        room.send(ws, {
           type: ServerMsg.WELCOME,
-          playerId,
-          tick: this.tickCount,
-          mapWidth: this.map.width,
-          mapHeight: this.map.height,
-          sessionToken: restored.sessionToken,
+          playerId: player.id,
+          tick: room.getTickCount(),
+          mapWidth: mapInfo.mapWidth,
+          mapHeight: mapInfo.mapHeight,
+          sessionToken: player.sessionToken,
           reconnected: true,
-          gameState: this.gameMode.getState(),
+          roomId: room.id,
+          gameState: room.getGameState(),
         });
 
-        // Broadcast PLAYER_JOIN so other clients know they're back
-        this.broadcast({
+        room.broadcast({
           type: ServerMsg.PLAYER_JOIN,
-          playerId,
-          name: restored.name,
-          shipType: restored.shipType,
+          playerId: player.id,
+          name: player.name,
+          shipType: player.shipType,
         });
 
-        return playerId;
+        return player.id;
       }
-      // Token invalid or expired — fall through to new player creation
+      // Token invalid — fall through to new player creation
     }
 
     const playerId = crypto.randomUUID();
 
-    const player = this.playerManager.addPlayer(playerId, name, shipType);
-    const spawnPos = this.playerManager.findSpawnPosition(this.map, SHIP_CONFIGS[shipType].radius);
-    player.ship.x = spawnPos.x;
-    player.ship.y = spawnPos.y;
+    // Assign to specified room or auto-assign
+    let room;
+    if (roomId) {
+      room = this.roomManager.assignPlayer(roomId, playerId, name, shipType, ws);
+    } else {
+      room = this.roomManager.autoAssignPlayer(playerId, name, shipType, ws);
+    }
 
-    // Notify game mode of new player
-    this.gameMode.onPlayerJoin(playerId, name, shipType);
+    if (!room) {
+      // All rooms full — notify and close
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'error', message: 'All rooms are full' }));
+        ws.close();
+      }
+      return null;
+    }
 
-    this.clients.set(playerId, ws);
-    this.inputQueues.set(playerId, []);
+    const player = room.playerManager.getPlayer(playerId);
+    if (!player) return null;
 
-    // Send WELCOME to the joining player (includes session token for future reconnects)
-    this.send(ws, {
+    const mapInfo = room.getMapInfo();
+    room.send(ws, {
       type: ServerMsg.WELCOME,
       playerId,
-      tick: this.tickCount,
-      mapWidth: this.map.width,
-      mapHeight: this.map.height,
+      tick: room.getTickCount(),
+      mapWidth: mapInfo.mapWidth,
+      mapHeight: mapInfo.mapHeight,
       sessionToken: player.sessionToken,
-      gameState: this.gameMode.getState(),
+      roomId: room.id,
+      gameState: room.getGameState(),
     });
 
-    // Broadcast PLAYER_JOIN to all other clients
-    this.broadcast({
+    room.broadcast({
       type: ServerMsg.PLAYER_JOIN,
       playerId,
       name,
@@ -366,151 +229,5 @@ export class GameServer {
     });
 
     return playerId;
-  }
-
-  /**
-   * Handle INPUT message: queue for processing in next tick.
-   */
-  private handleInput(playerId: string, msg: Record<string, unknown>): void {
-    const queue = this.inputQueues.get(playerId);
-    if (!queue) return;
-
-    queue.push({
-      seq: msg.seq as number,
-      data: msg.input as ShipInput,
-      fire: (msg.fire as boolean) ?? false,
-      fireBomb: (msg.fireBomb as boolean) ?? false,
-      multifire: (msg.multifire as boolean) ?? false,
-    });
-  }
-
-  /**
-   * Handle SHIP_SELECT: update player's ship type.
-   */
-  private handleShipSelect(playerId: string, shipType: number): void {
-    const player = this.playerManager.getPlayer(playerId);
-    if (!player) return;
-    if (shipType < 0 || shipType >= SHIP_CONFIGS.length) return;
-    player.shipType = shipType;
-    player.ship.energy = SHIP_CONFIGS[shipType].energy;
-  }
-
-  /**
-   * Handle player disconnect: hold slot for reconnection, broadcast PLAYER_LEAVE, schedule cleanup.
-   */
-  private onDisconnect(playerId: string): void {
-    this.clients.delete(playerId);
-
-    // Notify game mode before broadcast
-    this.gameMode.onPlayerLeave(playerId);
-
-    // Hold the player slot for potential reconnection
-    this.playerManager.holdPlayer(playerId, this.tickCount);
-
-    this.broadcast({
-      type: ServerMsg.PLAYER_LEAVE,
-      playerId,
-    });
-
-    // Schedule full removal after RECONNECT_TIMEOUT (in ms, converting from ticks at 100Hz)
-    const timeoutMs = (RECONNECT_TIMEOUT / TICK_RATE) * 1000;
-    this.disconnectTimers.set(playerId, setTimeout(() => {
-      this.playerManager.removePlayer(playerId);
-      this.weaponManager.removePlayer(playerId);
-      this.inputQueues.delete(playerId);
-      this.disconnectTimers.delete(playerId);
-    }, timeoutMs));
-  }
-
-  /**
-   * Build and broadcast a GameSnapshot to all connected clients.
-   */
-  broadcastSnapshot(): void {
-    const players = this.playerManager.getAllPlayers();
-    const projectiles = this.weaponManager.getProjectiles();
-
-    const snapshot: GameSnapshot = {
-      tick: this.tickCount,
-      players: players.map(p => ({
-        id: p.id,
-        name: p.name,
-        x: p.ship.x,
-        y: p.ship.y,
-        vx: p.ship.vx,
-        vy: p.ship.vy,
-        orientation: p.ship.orientation,
-        energy: p.ship.energy,
-        shipType: p.shipType,
-        alive: p.alive,
-        kills: p.kills,
-        deaths: p.deaths,
-        lastProcessedSeq: p.lastProcessedSeq,
-      })),
-      projectiles: projectiles.map(pr => ({
-        id: pr.id,
-        type: pr.type,
-        x: pr.x,
-        y: pr.y,
-        vx: pr.vx,
-        vy: pr.vy,
-        ownerId: pr.ownerId,
-        rear: pr.rear,
-      })),
-    };
-
-    const msg = JSON.stringify({ type: ServerMsg.SNAPSHOT, ...snapshot });
-    for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg);
-      }
-    }
-  }
-
-  /**
-   * Broadcast a message to all connected clients.
-   */
-  private broadcast(msg: Record<string, unknown>): void {
-    const data = JSON.stringify(msg);
-    for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data);
-      }
-    }
-  }
-
-  /**
-   * Send a message to a specific client.
-   */
-  private send(ws: WebSocket, msg: Record<string, unknown>): void {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(msg));
-    }
-  }
-
-  /**
-   * Handle CHAT message: validate and broadcast to all clients.
-   * Max message length is 200 characters. Empty messages are rejected.
-   */
-  handleChat(playerId: string, message: string): void {
-    if (!message || typeof message !== 'string' || message.length === 0 || message.length > 200) {
-      return;
-    }
-
-    const player = this.playerManager.getPlayer(playerId);
-    if (!player) return;
-
-    this.broadcast({
-      type: ServerMsg.CHAT,
-      playerId,
-      name: player.name,
-      message,
-    });
-  }
-
-  /**
-   * Get the current tick count (useful for testing).
-   */
-  getTickCount(): number {
-    return this.tickCount;
   }
 }

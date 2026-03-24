@@ -7,6 +7,8 @@ export enum ClientMsg {
   SHIP_SELECT = 0x03, // { shipType: number }
   PING = 0x04,        // { clientTime: number }
   CHAT = 0x05,        // { message: string }
+  ROOM_LIST = 0x06,   // (no payload — request room list)
+  ROOM_JOIN = 0x07,   // { roomId: string }
 }
 
 // Server -> Client message types
@@ -22,6 +24,7 @@ export enum ServerMsg {
   GAME_STATE = 0x09,    // GameModeState (mode type, scores, round, phase)
   SCORE_UPDATE = 0x0A,  // { state: GameModeState }
   TEAM_ASSIGN = 0x0B,   // { playerId: string, team: number }
+  ROOM_LIST = 0x0C,     // { rooms: RoomInfo[] }
 }
 
 export interface NetworkMessage {
