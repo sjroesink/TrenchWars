@@ -36,7 +36,7 @@ COPY packages/server/package.json packages/server/
 RUN npm ci
 
 # Install WebTransport native addon (no prebuilt for musl — builds from source)
-RUN apk add --no-cache python3 make g++ git cmake rust cargo perl linux-headers && \
+RUN apk add --no-cache python3 make g++ git cmake rust cargo perl linux-headers icu-dev && \
     npm install @fails-components/webtransport @fails-components/webtransport-transport-http3-quiche && \
     apk del python3 make g++ git cmake rust cargo perl linux-headers
 
