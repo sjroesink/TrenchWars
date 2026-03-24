@@ -4,7 +4,6 @@ import { WARBIRD, JAVELIN, SPIDER, DEFAULT_BOUNCE_FACTOR } from '@trench-wars/sh
 import type { GameLoop } from './game-loop';
 
 declare const __APP_VERSION__: string;
-declare const __COMMIT_HASH__: string;
 
 const SHIP_PRESETS: Record<string, ShipConfig> = {
   Warbird: WARBIRD,
@@ -35,8 +34,7 @@ export class DebugPanel {
     private gameLoop: GameLoop,
   ) {
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
-    const hash = typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : '?';
-    this.gui = new GUI({ title: `TrenchWars v${version} (${hash})` });
+    this.gui = new GUI({ title: `TrenchWars v${version}` });
 
     // Ship selector
     const selector = { ship: shipConfig.name };
