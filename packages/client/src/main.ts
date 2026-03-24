@@ -137,6 +137,7 @@ async function main(): Promise<void> {
           playerId,
           hud,
           soundManager,
+          shipType: selectedShipType,
           onFire: (type) => soundManager.play(type === 'bullet' ? 'bulletFire' : 'bombFire'),
         });
 
@@ -288,6 +289,7 @@ async function main(): Promise<void> {
       renderer,
       hud,
       soundManager,
+      shipType: selectedShipType,
     });
 
     // Create debug panel

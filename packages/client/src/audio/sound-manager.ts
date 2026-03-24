@@ -1,68 +1,61 @@
 import { Howl } from 'howler';
 
+const SOUNDS = {
+  thrust:     { src: '/audio/thrust.wav', loop: true, volume: 0.3 },
+  bulletFire: { src: '/audio/bullet-fire.wav', volume: 0.4 },
+  bombFire:   { src: '/audio/bomb-fire.wav', volume: 0.5 },
+  explosion:  { src: '/audio/explosion.wav', volume: 0.5 },
+  bounce:     { src: '/audio/bounce.wav', volume: 0.3 },
+  death:      { src: '/audio/death.wav', volume: 0.6 },
+} as const;
+
+type SoundName = keyof typeof SOUNDS;
+
 /**
- * Audio manager wrapping Howler.js with audio sprites for all game sounds.
- * Must be initialized after a user interaction (click/keypress) to satisfy
- * browser autoplay policy.
+ * Audio manager using individual Howl instances per sound.
+ * Must be initialized after a user interaction to satisfy browser autoplay policy.
  */
 export class SoundManager {
-  private sfx: Howl | null = null;
+  private howls = new Map<string, Howl>();
   private initialized = false;
   private thrustId: number | null = null;
 
-  /**
-   * Initialize the Howl instance with audio sprites.
-   * Call on first user interaction (e.g. ship-select click/key).
-   */
+  /** Initialize all Howl instances. Call on first user interaction. */
   init(): void {
     if (this.initialized) return;
 
-    this.sfx = new Howl({
-      src: ['/audio/sfx.webm', '/audio/sfx.mp3'],
-      sprite: {
-        thrust:     [0, 200, true],     // looping
-        bulletFire: [200, 150],
-        bombFire:   [350, 300],
-        explosion:  [650, 500],
-        bounce:     [1150, 100],
-        death:      [1250, 400],
-      },
-      volume: 0.5,
-    });
+    for (const [name, config] of Object.entries(SOUNDS)) {
+      this.howls.set(name, new Howl({
+        src: [config.src],
+        loop: 'loop' in config && config.loop,
+        volume: config.volume,
+      }));
+    }
     this.initialized = true;
   }
 
-  /**
-   * Play a named audio sprite.
-   * @param name - Sprite name (thrust, bulletFire, bombFire, explosion, bounce, death)
-   * @param pan - Optional stereo pan (-1 left to 1 right)
-   */
-  play(name: string, pan?: number): void {
-    if (!this.initialized || !this.sfx) return;
-
-    const id = this.sfx.play(name);
-    if (pan !== undefined) {
-      this.sfx.stereo(pan, id);
-    }
+  /** Play a named sound. */
+  play(name: string): void {
+    if (!this.initialized) return;
+    this.howls.get(name)?.play();
   }
 
-  /** Start the looping thrust sound. No-op if already playing. */
+  /** Start the looping thrust sound. */
   startThrust(): void {
-    if (!this.initialized || !this.sfx) return;
+    if (!this.initialized) return;
     if (this.thrustId !== null) return;
-
-    this.thrustId = this.sfx.play('thrust');
+    const howl = this.howls.get('thrust');
+    if (howl) this.thrustId = howl.play();
   }
 
   /** Stop the looping thrust sound. */
   stopThrust(): void {
-    if (!this.sfx || this.thrustId === null) return;
-
-    this.sfx.stop(this.thrustId);
+    if (this.thrustId === null) return;
+    const howl = this.howls.get('thrust');
+    if (howl) howl.stop(this.thrustId);
     this.thrustId = null;
   }
 
-  /** Whether the sound manager has been initialized. */
   isInitialized(): boolean {
     return this.initialized;
   }
