@@ -4,8 +4,40 @@ services:
     container_name: trenchwars
     restart: unless-stopped
     ports:
-      - "9020:8080"
+      - "9020:8080"           # HTTP (TCP) — Traefik proxies this
+      - "4433:4433/udp"       # WebTransport (UDP) — direct
     environment:
       - NODE_ENV=production
       - PORT=8080
+      - WT_PORT=4433
       - STATIC_DIR=/app/public
+      - TLS_CERT=/certs/cert.pem
+      - TLS_KEY=/certs/key.pem
+    volumes:
+      - /mnt/user/appdata/trenchwars/certs:/certs:ro
+    depends_on:
+      certbot:
+        condition: service_started
+
+  certbot:
+    image: certbot/dns-cloudflare:latest
+    container_name: trenchwars-certbot
+    restart: unless-stopped
+    volumes:
+      - /mnt/user/appdata/trenchwars/certs:/etc/letsencrypt
+      - /mnt/user/appdata/trenchwars/cloudflare.ini:/cloudflare.ini:ro
+    entrypoint: >
+      sh -c "certbot certonly
+        --dns-cloudflare
+        --dns-cloudflare-credentials /cloudflare.ini
+        -d wt.trenchwars.sander.ninja
+        --non-interactive --agree-tos
+        --email sander@roesink.dev
+      && cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/fullchain.pem /etc/letsencrypt/cert.pem
+      && cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/privkey.pem /etc/letsencrypt/key.pem
+      && while :; do
+        certbot renew --quiet;
+        cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/fullchain.pem /etc/letsencrypt/cert.pem;
+        cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/privkey.pem /etc/letsencrypt/key.pem;
+        sleep 12h;
+      done"

@@ -32,9 +32,9 @@ function getServerUrls(): { ws: string; wt: string } {
       wt: 'https://127.0.0.1:9020/game', // Same port — HTTP/3 on UDP, HTTPS on TCP
     };
   }
-  // Production: WebSocket and WebTransport on same host/port
+  // Production: WebSocket through Traefik, WebTransport direct (bypasses Cloudflare/Traefik)
   const wsUrl = `wss://${window.location.host}`;
-  const wtUrl = `https://${window.location.host}/game`;
+  const wtUrl = `https://wt.trenchwars.sander.ninja:4433/game`;
   return { ws: wsUrl, wt: wtUrl };
 }
 

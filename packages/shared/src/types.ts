@@ -61,6 +61,7 @@ export interface WeaponConfig {
   multifireEnergy: number;   // energy cost for multifire
   multifireDelay: number;    // seconds between multifire shots
   multifireAngle: number;    // spread angle in radians between each bullet
+  hasBomb: boolean;          // whether this ship can fire bombs
 }
 
 export interface ProjectileState {

@@ -9,6 +9,7 @@ import { WtConnection } from './transport/wt-connection';
 import { generateTestArena } from '@trench-wars/shared';
 
 const PORT = parseInt(process.env.PORT || '9020', 10);
+const WT_PORT = parseInt(process.env.WT_PORT || String(PORT), 10);
 const TLS_CERT = process.env.TLS_CERT || '';
 const TLS_KEY = process.env.TLS_KEY || '';
 const STATIC_DIR = process.env.STATIC_DIR || join(process.cwd(), 'public');
@@ -95,7 +96,7 @@ if (hasTls) {
       const { Http3Server } = await import('@fails-components/webtransport');
 
       const h3Server = new Http3Server({
-        port: PORT,
+        port: WT_PORT,
         host: '0.0.0.0',
         secret: 'trenchwars-' + Date.now(),
         cert,
@@ -106,7 +107,7 @@ if (hasTls) {
 
       // Accept WebTransport sessions on /game path
       const sessionStream = h3Server.sessionStream('/game');
-      console.log(`  WebTransport on https://127.0.0.1:${PORT}/game (same port, UDP)`);
+      console.log(`  WebTransport on https://0.0.0.0:${WT_PORT}/game (UDP)`);
 
       // Compute SPKI hash for Chrome launch flags
       const spkiHash = execSync(
@@ -114,7 +115,7 @@ if (hasTls) {
       ).toString().trim();
       console.log('');
       console.log('  Launch Chrome with:');
-      console.log(`    chrome --ignore-certificate-errors-spki-list=${spkiHash} --origin-to-force-quic-on=127.0.0.1:${PORT} https://127.0.0.1:${PORT}`);
+      console.log(`    chrome --ignore-certificate-errors-spki-list=${spkiHash} --origin-to-force-quic-on=127.0.0.1:${WT_PORT} https://127.0.0.1:${PORT}`);
 
       // Handle incoming sessions
       (async () => {

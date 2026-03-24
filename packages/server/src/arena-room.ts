@@ -330,11 +330,16 @@ export class ArenaRoom {
         if (input.fire) {
           this.weaponManager.fireBullet(player, weaponConfig, this.tickCount);
         }
-        if (input.fireBomb) {
+        if (input.fireBomb && weaponConfig.hasBomb) {
           this.weaponManager.fireBomb(player, weaponConfig, this.tickCount);
         }
         if (input.multifire) {
-          this.weaponManager.fireMultifire(player, weaponConfig, this.tickCount);
+          if (weaponConfig.multifireCount > 0) {
+            this.weaponManager.fireMultifire(player, weaponConfig, this.tickCount);
+          } else {
+            // Ships without multifire (e.g. Warbird): Ctrl fires a bullet
+            this.weaponManager.fireBullet(player, weaponConfig, this.tickCount);
+          }
         }
       } else {
         updateShipPhysics(player.ship, NEUTRAL_INPUT, config, TICK_DT);

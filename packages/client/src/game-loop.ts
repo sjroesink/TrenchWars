@@ -273,20 +273,26 @@ export class GameLoop {
           const id = this.localProjectileNextId--;
           this.localProjectiles.push(createBullet(this.shipState, wc, this.playerId || '', id, this.localTick));
         }
-        if (weapons.fireBomb && wc) {
+        if (weapons.fireBomb && wc && wc.hasBomb) {
           const id = this.localProjectileNextId--;
           const { projectile } = createBomb(this.shipState, wc, this.playerId || '', id, this.localTick);
           this.localProjectiles.push(projectile);
         }
-        if (weapons.multifire && wc && wc.multifireCount > 0) {
-          const startId = this.localProjectileNextId;
-          this.localProjectileNextId -= wc.multifireCount;
-          this.localProjectiles.push(...createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick));
+        if (weapons.multifire && wc) {
+          if (wc.multifireCount > 0) {
+            const startId = this.localProjectileNextId;
+            this.localProjectileNextId -= wc.multifireCount;
+            this.localProjectiles.push(...createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick));
+          } else {
+            // Ships without multifire (e.g. Warbird): Ctrl fires a bullet
+            const id = this.localProjectileNextId--;
+            this.localProjectiles.push(createBullet(this.shipState, wc, this.playerId || '', id, this.localTick));
+          }
         }
 
         // Fire audio callbacks
         if (weapons.fire && this.onFire) this.onFire('bullet');
-        if (weapons.fireBomb && this.onFire) this.onFire('bomb');
+        if (weapons.fireBomb && wc?.hasBomb && this.onFire) this.onFire('bomb');
         if (weapons.multifire && this.onFire) this.onFire('bullet');
       }
 

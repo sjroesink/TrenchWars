@@ -42,6 +42,7 @@ function makeWeaponConfig(overrides: Partial<WeaponConfig> = {}): WeaponConfig {
     multifireEnergy: 0,
     multifireDelay: 0,
     multifireAngle: 0,
+    hasBomb: true,
     ...overrides,
   };
 }

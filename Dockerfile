@@ -35,6 +35,11 @@ COPY packages/server/package.json packages/server/
 
 RUN npm ci
 
+# Install WebTransport native addon (requires build tools)
+RUN apk add --no-cache python3 make g++ && \
+    npm install @fails-components/webtransport @fails-components/webtransport-transport-http3-quiche && \
+    apk del python3 make g++
+
 # Install tsx globally for running TypeScript
 RUN npm install -g tsx
 
@@ -54,5 +59,6 @@ ENV PORT=8080
 ENV STATIC_DIR=/app/public
 
 EXPOSE 8080
+EXPOSE 4433/udp
 
 CMD sh -c "APP_VERSION=$(cat /tmp/app_version) exec tsx packages/server/src/main.ts"

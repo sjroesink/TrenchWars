@@ -43,7 +43,7 @@ describe('Lag-compensated hit detection', () => {
       bulletSpeed: 0, bombSpeed: 0,
       bulletFireDelay: 0, bombFireDelay: 0,
       bulletFireEnergy: 0, bombFireEnergy: 0,
-      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0,
+      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0, hasBomb: true,
     };
 
     wm.fireBullet(shooter, weaponConfig, 50);
@@ -77,7 +77,7 @@ describe('Lag-compensated hit detection', () => {
       bulletSpeed: 0, bombSpeed: 0,
       bulletFireDelay: 0, bombFireDelay: 0,
       bulletFireEnergy: 0, bombFireEnergy: 0,
-      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0,
+      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0, hasBomb: true,
     };
 
     wm.fireBullet(shooter, weaponConfig, 50);
@@ -118,7 +118,7 @@ describe('Lag-compensated hit detection', () => {
       bulletSpeed: 0, bombSpeed: 0,
       bulletFireDelay: 0, bombFireDelay: 0,
       bulletFireEnergy: 0, bombFireEnergy: 0,
-      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0,
+      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0, hasBomb: true,
     };
 
     emptyWm.fireBullet(shooter, weaponConfig, 50);
@@ -160,7 +160,7 @@ describe('Lag-compensated hit detection', () => {
       bulletSpeed: 0, bombSpeed: 0,
       bulletFireDelay: 0, bombFireDelay: 0,
       bulletFireEnergy: 0, bombFireEnergy: 0,
-      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0,
+      bombBounceCount: 0, bombThrust: 0, multifireCount: 0, multifireEnergy: 0, multifireDelay: 0, multifireAngle: 0, hasBomb: true,
     };
 
     wm.fireBullet(shooter, weaponConfig, 50);

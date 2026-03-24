@@ -106,17 +106,18 @@ export const SPIDER: ShipConfig = convertShip({
 // Negative bulletSpeed = rear-firing gun (Javelin)
 export const WARBIRD_WEAPONS: WeaponConfig = {
   bulletSpeed: 5000 / 10 / 16,     // 31.25 tiles/s (fast forward gun)
-  bombSpeed: 2000 / 10 / 16,       // 12.5 tiles/s (no bomb in TW, but keep as fallback)
+  bombSpeed: 0,                     // Warbird: no bomb
   bulletFireDelay: 100 / 100,       // 1.00 seconds
-  bombFireDelay: 50 / 100,          // 0.50 seconds
+  bombFireDelay: 0,
   bulletFireEnergy: 450,
-  bombFireEnergy: 300,
-  bombBounceCount: 0,               // Warbird: no bombs in TW
-  bombThrust: 50 / 100 * 10 / 16,  // recoil
+  bombFireEnergy: 0,
+  bombBounceCount: 0,
+  bombThrust: 0,
   multifireCount: 0,                // Warbird: no multifire
   multifireEnergy: 450,
   multifireDelay: 100 / 100,
   multifireAngle: 0,
+  hasBomb: false,                   // Warbird: no bomb, Ctrl fires bullet
 };
 
 export const JAVELIN_WEAPONS: WeaponConfig = {
@@ -132,6 +133,7 @@ export const JAVELIN_WEAPONS: WeaponConfig = {
   multifireEnergy: 450,             // TW: MF-E=450 for Jav
   multifireDelay: 150 / 100,        // 1.50 seconds (TW: MF-D=150)
   multifireAngle: 0.15,             // wider spread between rear bullets
+  hasBomb: true,
 };
 
 export const SPIDER_WEAPONS: WeaponConfig = {
@@ -147,6 +149,7 @@ export const SPIDER_WEAPONS: WeaponConfig = {
   multifireEnergy: 225,
   multifireDelay: 35 / 100,
   multifireAngle: 0,
+  hasBomb: true,
 };
 
 // Indexed by ship type number (0=Warbird, 1=Javelin, 2=Spider)
