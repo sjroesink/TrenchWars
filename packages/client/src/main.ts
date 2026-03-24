@@ -138,6 +138,7 @@ async function main(): Promise<void> {
           hud,
           soundManager,
           shipType: selectedShipType,
+          playerNames,
           onFire: (type) => soundManager.play(type === 'bullet' ? 'bulletFire' : 'bombFire'),
         });
 
@@ -190,10 +191,24 @@ async function main(): Promise<void> {
         const victimName = playerNames.get(data.killedId) || data.killedId;
         const weaponType = (data.weaponType === 'bomb' ? 'bomb' : 'bullet') as 'bullet' | 'bomb';
         killFeed.addKill(killerName, victimName, weaponType);
-        // Audio: explosion for any death, death sound if local player died
-        soundManager.play('explosion');
-        if (data.killedId === playerId) {
-          soundManager.play('death');
+
+        // Spawn explosion at victim's position (from latest snapshot)
+        if (gameLoop) {
+          const remotes = gameLoop.getRemotePlayers();
+          const victim = remotes.get(data.killedId);
+          if (victim) {
+            renderer.addExplosion(victim.x, victim.y, true);
+            const dx = victim.x - shipState.x;
+            const dy = victim.y - shipState.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            soundManager.playAtDistance('explosion', dist);
+          } else if (data.killedId === playerId) {
+            // Local player died
+            renderer.addExplosion(shipState.x, shipState.y, true);
+            soundManager.play('death');
+          } else {
+            soundManager.play('explosion');
+          }
         }
         console.log(`Kill: ${killerName} -> ${victimName} (${data.weaponType})`);
       },

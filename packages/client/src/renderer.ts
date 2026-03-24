@@ -134,6 +134,7 @@ export class Renderer {
     camera: Camera,
     remotePlayers?: Map<string, InterpolatedEntity>,
     projectiles?: GameSnapshot['projectiles'],
+    playerNames?: Map<string, string>,
   ): void {
     const screenW = this.app.screen.width;
     const screenH = this.app.screen.height;
@@ -170,7 +171,7 @@ export class Renderer {
 
     // Remote players
     if (remotePlayers) {
-      this.remotePlayerRenderer.render(remotePlayers, camera);
+      this.remotePlayerRenderer.render(remotePlayers, camera, playerNames);
     }
 
     // Projectiles and explosions

@@ -45,6 +45,7 @@ export interface GameLoopOptions {
   // Callbacks
   onFire?: (type: 'bullet' | 'bomb') => void;
   shipType?: number;
+  playerNames?: Map<string, string>;
 }
 
 /**
@@ -80,6 +81,7 @@ export class GameLoop {
 
   // Callbacks
   private onFire: ((type: 'bullet' | 'bomb') => void) | null;
+  private playerNames: Map<string, string> | null;
 
   // Thrust state tracking for audio
   private wasThrusting = false;
@@ -124,6 +126,7 @@ export class GameLoop {
     this.soundManager = options.soundManager ?? null;
     this.onFire = options.onFire ?? null;
     this.shipType = options.shipType ?? 0;
+    this.playerNames = options.playerNames ?? null;
   }
 
   /** Allow external mutation of bounce factor (debug panel). */
@@ -390,7 +393,7 @@ export class GameLoop {
       this.renderer.spawnExhaust(this.shipState.x, this.shipState.y, reverseOrientation);
     }
 
-    this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles);
+    this.renderer.render(this.shipState, this.camera, interpolatedRemotes, projectiles, this.playerNames ?? undefined);
 
     // Render visual effects (exhaust particles, explosions)
     this.renderer.renderEffects(this.camera);
