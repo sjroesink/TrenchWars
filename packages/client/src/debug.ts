@@ -3,7 +3,6 @@ import type { ShipState, ShipConfig } from '@trench-wars/shared';
 import { WARBIRD, JAVELIN, SPIDER, DEFAULT_BOUNCE_FACTOR } from '@trench-wars/shared';
 import type { GameLoop } from './game-loop';
 
-declare const __APP_VERSION__: string;
 
 const SHIP_PRESETS: Record<string, ShipConfig> = {
   Warbird: WARBIRD,
@@ -33,8 +32,7 @@ export class DebugPanel {
     private shipState: ShipState,
     private gameLoop: GameLoop,
   ) {
-    const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
-    this.gui = new GUI({ title: `TrenchWars v${version}` });
+    this.gui = new GUI({ title: `TrenchWars v${import.meta.env.VITE_APP_VERSION || 'dev'}` });
 
     // Ship selector
     const selector = { ship: shipConfig.name };

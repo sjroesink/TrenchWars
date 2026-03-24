@@ -1,11 +1,20 @@
 import { createServer } from 'http';
 import { readFileSync, existsSync, statSync } from 'fs';
 import { join, extname } from 'path';
+import { execSync } from 'child_process';
 import { GameServer } from './game-server';
 import { generateTestArena } from '@trench-wars/shared';
 
 const PORT = parseInt(process.env.PORT || '9020', 10);
 const STATIC_DIR = process.env.STATIC_DIR || join(process.cwd(), 'public');
+
+// Version from git commit count
+let APP_VERSION = 'dev';
+try {
+  const count = execSync('git rev-list --count HEAD').toString().trim();
+  APP_VERSION = `0.${count}.0`;
+} catch { /* git not available in production — use env */ }
+APP_VERSION = process.env.APP_VERSION || APP_VERSION;
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -56,6 +65,6 @@ const map = generateTestArena(200, 200);
 const server = new GameServer({ map, port: PORT, httpServer });
 server.start();
 
-console.log(`TrenchWars running on http://localhost:${PORT}`);
-console.log(`WebSocket on ws://localhost:${PORT}`);
-console.log(`Serving static files from ${STATIC_DIR}`);
+console.log(`TrenchWars v${APP_VERSION}`);
+console.log(`  HTTP + WebSocket on http://localhost:${PORT}`);
+console.log(`  Static files from ${STATIC_DIR}`);
