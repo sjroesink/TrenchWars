@@ -35,7 +35,9 @@ export class RemotePlayerRenderer {
 
       sprite.x = screen.x;
       sprite.y = screen.y;
-      sprite.texture = this.shipSpriteManager.getTexture(entity.shipType, entity.orientation);
+      sprite.texture = this.shipSpriteManager.getTexture(entity.shipType);
+      // Orientation 0 = east in game, sprite frame 0 = up. Offset by -0.25 (90° CCW).
+      sprite.rotation = (entity.orientation - 0.25) * Math.PI * 2;
       sprite.visible = true;
 
       index++;

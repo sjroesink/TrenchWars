@@ -53,16 +53,6 @@ export class Renderer {
     // Remote players layer (behind projectiles and local ship)
     this.remotePlayerRenderer = new RemotePlayerRenderer(this.app.stage, this.shipSpriteManager);
 
-    // Apply glow filter to remote player container (red glow)
-    const remoteGlow = new GlowFilter({
-      distance: 10,
-      outerStrength: 2,
-      innerStrength: 0,
-      color: 0xff4444,
-      quality: 0.3,
-    });
-    this.remotePlayerRenderer.container.filters = [remoteGlow];
-
     // Weapon/projectile layer (above remote players, below local ship)
     this.weaponRenderer = new WeaponRenderer(this.app.stage);
 
@@ -79,23 +69,13 @@ export class Renderer {
     // Visual effects layer (exhaust particles and enhanced explosions)
     this.visualEffects = new VisualEffects(this.app.stage);
 
-    // Ship sprite in its own container for glow filter
+    // Ship sprite (no glow filter — sprites have their own visual style)
     this.shipContainer = new Container();
     this.shipSprite = new Sprite();
     this.shipSprite.anchor.set(0.5, 0.5);
-    this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType, 0);
+    this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType);
     this.shipContainer.addChild(this.shipSprite);
     this.app.stage.addChild(this.shipContainer);
-
-    // Apply glow filter to local ship container (green glow)
-    const shipGlow = new GlowFilter({
-      distance: 10,
-      outerStrength: 2,
-      innerStrength: 0,
-      color: 0x00ff88,
-      quality: 0.3,
-    });
-    this.shipContainer.filters = [shipGlow];
 
     // Radar minimap (last child so it renders on top of all game elements)
     this.radar = new Radar(this.app.stage, map.width, map);
@@ -111,9 +91,12 @@ export class Renderer {
     this.app.stage.filters = [bloom];
   }
 
-  /** Set the local player's ship type for sprite lookup */
+  /** Set the local player's ship type and update sprite texture */
   setShipType(type: number): void {
     this.shipType = type;
+    if (this.shipSprite && this.shipSpriteManager) {
+      this.shipSprite.texture = this.shipSpriteManager.getTexture(type);
+    }
   }
 
   /** Trigger an enhanced explosion effect at a world position */
@@ -200,6 +183,7 @@ export class Renderer {
     const shipScreen = camera.worldToScreen(state.x, state.y);
     this.shipContainer.x = shipScreen.x;
     this.shipContainer.y = shipScreen.y;
-    this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType, state.orientation);
+    // Orientation 0 = east in game, sprite frame 0 = up. Offset by -0.25 (90° CCW).
+    this.shipSprite.rotation = (state.orientation - 0.25) * Math.PI * 2;
   }
 }
