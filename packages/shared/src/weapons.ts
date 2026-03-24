@@ -145,6 +145,8 @@ export function updateProjectile(
   map: TileMap,
   dt: number,
 ): 'active' | 'wall_explode' {
+  let bouncedThisTick = false;
+
   // Move X axis
   const prevX = proj.x;
   proj.x += proj.vx * dt;
@@ -156,11 +158,11 @@ export function updateProjectile(
     if (proj.type === 'bullet') {
       return 'wall_explode';
     }
-    // Bomb: check bounces remaining before decrementing
     if (proj.bouncesRemaining <= 0) {
       return 'wall_explode';
     }
     proj.bouncesRemaining--;
+    bouncedThisTick = true;
   }
 
   // Move Y axis
@@ -174,10 +176,13 @@ export function updateProjectile(
     if (proj.type === 'bullet') {
       return 'wall_explode';
     }
-    if (proj.bouncesRemaining <= 0) {
-      return 'wall_explode';
+    // Corner hit: if already bounced on X this tick, don't consume another bounce
+    if (!bouncedThisTick) {
+      if (proj.bouncesRemaining <= 0) {
+        return 'wall_explode';
+      }
+      proj.bouncesRemaining--;
     }
-    proj.bouncesRemaining--;
   }
 
   return 'active';
