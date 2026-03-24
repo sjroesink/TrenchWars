@@ -84,9 +84,9 @@ export class GameLoop {
   // Thrust state tracking for audio
   private wasThrusting = false;
 
-  // Client-predicted projectiles (spawned immediately on fire, removed when server confirms)
-  private localProjectiles: (ProjectileState & { spawnTime: number })[] = [];
-  private localProjectileNextId = -1; // negative IDs to distinguish from server IDs
+  // Client-authoritative projectiles (own bullets/bombs, never synced from server)
+  private localProjectiles: ProjectileState[] = [];
+  private localProjectileNextId = -1;
   private shipType = 0;
 
   // Player score tracking (updated from snapshots)
@@ -264,24 +264,21 @@ export class GameLoop {
           weapons.multifire,
         );
 
-        // Client-side predicted projectiles: spawn immediately
+        // Client-authoritative projectiles: spawn immediately, no server sync
         const wc = SHIP_WEAPONS[this.shipType];
-        const now = Date.now();
         if (weapons.fire && wc) {
           const id = this.localProjectileNextId--;
-          const bullet = createBullet(this.shipState, wc, this.playerId || '', id, this.localTick);
-          this.localProjectiles.push({ ...bullet, spawnTime: now });
+          this.localProjectiles.push(createBullet(this.shipState, wc, this.playerId || '', id, this.localTick));
         }
         if (weapons.fireBomb && wc) {
           const id = this.localProjectileNextId--;
           const { projectile } = createBomb(this.shipState, wc, this.playerId || '', id, this.localTick);
-          this.localProjectiles.push({ ...projectile, spawnTime: now });
+          this.localProjectiles.push(projectile);
         }
         if (weapons.multifire && wc && wc.multifireCount > 0) {
           const startId = this.localProjectileNextId;
           this.localProjectileNextId -= wc.multifireCount;
-          const bullets = createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick);
-          for (const b of bullets) this.localProjectiles.push({ ...b, spawnTime: now });
+          this.localProjectiles.push(...createMultifire(this.shipState, wc, this.playerId || '', startId, this.localTick));
         }
 
         // Fire audio callbacks
@@ -314,18 +311,13 @@ export class GameLoop {
         }
       }
 
-      // Update local predicted projectiles
+      // Update own projectiles (client-authoritative)
       for (let i = this.localProjectiles.length - 1; i >= 0; i--) {
         const result = updateProjectile(this.localProjectiles[i], this.tileMap, TICK_DT);
         if (result === 'wall_explode' || this.localTick >= this.localProjectiles[i].endTick) {
           this.localProjectiles.splice(i, 1);
         }
       }
-      // Expire local projectiles older than 500ms (server should have them by then)
-      const maxLocalAge = 50; // 50 ticks = 500ms
-      this.localProjectiles = this.localProjectiles.filter(
-        (p) => this.localTick - (p.endTick - 800) < maxLocalAge,
-      );
 
       this.localTick++;
       this.accumulator -= TICK_DT;
@@ -361,23 +353,16 @@ export class GameLoop {
         }
       }
       const serverProjectiles = this.interpolation.getProjectiles();
-      // Remove local predictions that are old enough for the server to have them (>150ms).
-      // Keep recent ones to avoid the visual gap between fire and server confirmation.
-      const now = Date.now();
-      const serverHasOurs = serverProjectiles.some(
-        (sp) => sp.ownerId === this.playerId,
+      // Own projectiles: always client-authoritative (no sync, no lag)
+      // Other players' projectiles: from server snapshots
+      const othersProjectiles = serverProjectiles.filter(
+        (sp) => sp.ownerId !== this.playerId,
       );
-      if (serverHasOurs) {
-        this.localProjectiles = this.localProjectiles.filter(
-          (p) => now - p.spawnTime < 150,
-        );
-      }
-      // Combine: server projectiles + recent local predictions
-      const localAsSnapshot = this.localProjectiles.map((p) => ({
+      const ownAsSnapshot = this.localProjectiles.map((p) => ({
         id: p.id, type: p.type, x: p.x, y: p.y, vx: p.vx, vy: p.vy,
         ownerId: p.ownerId, rear: p.rear,
       }));
-      projectiles = [...serverProjectiles, ...localAsSnapshot];
+      projectiles = [...othersProjectiles, ...ownAsSnapshot];
     }
 
     // Spawn exhaust particles while thrusting (forward or reverse)
