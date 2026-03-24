@@ -236,15 +236,15 @@ export class GameLoop {
 
     // Fixed timestep physics updates
     while (this.accumulator >= TICK_DT) {
-      // Thrust audio: detect edge transitions (forward or reverse)
-      const isThrusting = input.thrust || input.reverse;
-      if (isThrusting && !this.wasThrusting && this.soundManager) {
+      // Thrust audio: only plays during afterburner (Shift + movement)
+      const isBoosting = input.afterburner && (input.thrust || input.reverse);
+      if (isBoosting && !this.wasThrusting && this.soundManager) {
         this.soundManager.startThrust();
       }
-      if (!isThrusting && this.wasThrusting && this.soundManager) {
+      if (!isBoosting && this.wasThrusting && this.soundManager) {
         this.soundManager.stopThrust();
       }
-      this.wasThrusting = isThrusting;
+      this.wasThrusting = isBoosting;
 
       if (this.network && this.prediction) {
         // Networked mode: record, send, predict locally
@@ -313,8 +313,23 @@ export class GameLoop {
 
       // Update own projectiles (client-authoritative)
       for (let i = this.localProjectiles.length - 1; i >= 0; i--) {
-        const result = updateProjectile(this.localProjectiles[i], this.tileMap, TICK_DT);
-        if (result === 'wall_explode' || this.localTick >= this.localProjectiles[i].endTick) {
+        const proj = this.localProjectiles[i];
+        const result = updateProjectile(proj, this.tileMap, TICK_DT);
+        if (result === 'wall_explode' || this.localTick >= proj.endTick) {
+          // Explosion effect + distance-based sound for bombs
+          if (result === 'wall_explode' && proj.type === 'bomb') {
+            this.renderer.addExplosion(proj.x, proj.y, true);
+            if (this.soundManager) {
+              const dx = proj.x - this.shipState.x;
+              const dy = proj.y - this.shipState.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              this.soundManager.playAtDistance('explosion', dist);
+            }
+          }
+          // Bullet wall hit: small explosion
+          if (result === 'wall_explode' && proj.type === 'bullet') {
+            this.renderer.addExplosion(proj.x, proj.y, false);
+          }
           this.localProjectiles.splice(i, 1);
         }
       }

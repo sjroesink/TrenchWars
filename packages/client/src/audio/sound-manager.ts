@@ -40,6 +40,17 @@ export class SoundManager {
     this.howls.get(name)?.play();
   }
 
+  /** Play a sound with volume scaled by distance (in tiles). */
+  playAtDistance(name: string, distance: number, maxDistance = 30): void {
+    if (!this.initialized) return;
+    if (distance >= maxDistance) return;
+    const howl = this.howls.get(name);
+    if (!howl) return;
+    const volume = Math.max(0, 1 - distance / maxDistance);
+    const id = howl.play();
+    howl.volume(volume * (SOUNDS[name as SoundName]?.volume ?? 0.5), id);
+  }
+
   /** Start the looping thrust sound. */
   startThrust(): void {
     if (!this.initialized) return;
