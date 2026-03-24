@@ -73,6 +73,8 @@ export class Renderer {
     this.shipContainer = new Container();
     this.shipSprite = new Sprite();
     this.shipSprite.anchor.set(0.5, 0.5);
+    // Scale 144px sprite to match hitbox (~28px diameter) + visual margin
+    this.shipSprite.scale.set(0.25);
     this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType);
     this.shipContainer.addChild(this.shipSprite);
     this.app.stage.addChild(this.shipContainer);
@@ -184,6 +186,7 @@ export class Renderer {
     this.shipContainer.x = shipScreen.x;
     this.shipContainer.y = shipScreen.y;
     // Orientation 0 = east in game, sprite frame 0 = up. Offset by -0.25 (90° CCW).
-    this.shipSprite.rotation = (state.orientation - 0.25) * Math.PI * 2;
+    // Sprite faces up (0°), game orientation 0 = east. Offset +0.25 to align.
+    this.shipSprite.rotation = (state.orientation + 0.25) * Math.PI * 2;
   }
 }
