@@ -101,6 +101,9 @@ async function main(): Promise<void> {
   let gameLoop: GameLoop | undefined;
   let debugStarted = false;
 
+  // Hoisted so onRoomList callback can resolve it
+  let roomListResolve: ((rooms: RoomInfo[]) => void) | null = null;
+
   try {
     prediction = new PredictionManager();
 
@@ -237,6 +240,14 @@ async function main(): Promise<void> {
         }
       },
 
+      onRoomList: (data) => {
+        // Room list received -- resolve the pending promise
+        if (roomListResolve) {
+          roomListResolve(data.rooms);
+          roomListResolve = null;
+        }
+      },
+
       onDisconnect: () => {
         console.warn('Disconnected from server -- attempting reconnect...');
       },
@@ -248,10 +259,22 @@ async function main(): Promise<void> {
 
     networkRef = network;
     await network.connect(serverUrl);
+    console.log(`Connected to ${serverUrl}`);
 
-    // Send JOIN after connection with selected ship type
-    network.sendJoin(playerName, selectedShipType);
-    console.log(`Connecting to ${serverUrl}...`);
+    // Request room list and wait for response
+    const roomListPromise = new Promise<RoomInfo[]>((resolve) => {
+      roomListResolve = resolve;
+    });
+    network.requestRoomList();
+    const rooms = await roomListPromise;
+
+    // Show room selection (auto-selects if only one room available)
+    const roomSelect = new RoomSelect();
+    selectedRoomId = await roomSelect.show(rooms);
+    console.log(`Selected room: ${selectedRoomId}`);
+
+    // Send JOIN with selected room and ship type
+    network.sendJoin(playerName, selectedShipType, undefined, selectedRoomId);
   } catch {
     // Server not available — fall back to local-only mode
     console.warn('Server not available, running in local-only mode');

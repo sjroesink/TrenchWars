@@ -1,5 +1,5 @@
 import { ClientMsg, ServerMsg } from '@trench-wars/shared';
-import type { ShipInput, GameSnapshot } from '@trench-wars/shared';
+import type { ShipInput, GameSnapshot, RoomInfo } from '@trench-wars/shared';
 import type { GameModeState } from '@trench-wars/shared';
 
 export type ServerMessageHandler = {
@@ -13,6 +13,7 @@ export type ServerMessageHandler = {
   onScoreUpdate?: (data: { state: GameModeState }) => void;
   onChat?: (data: { playerId: string; name: string; message: string }) => void;
   onGameState?: (data: { event: string; [key: string]: unknown }) => void;
+  onRoomList?: (data: { rooms: RoomInfo[] }) => void;
   onDisconnect?: () => void;
   onReconnect?: () => void;
 };
@@ -64,12 +65,19 @@ export class NetworkClient {
     return this.sessionToken;
   }
 
-  sendJoin(name: string, shipType: number, sessionToken?: string): void {
+  requestRoomList(): void {
+    this.send({ type: ClientMsg.ROOM_LIST });
+  }
+
+  sendJoin(name: string, shipType: number, sessionToken?: string, roomId?: string): void {
     this.playerName = name;
     this.shipType = shipType;
     const msg: Record<string, unknown> = { type: ClientMsg.JOIN, name, shipType };
     if (sessionToken) {
       msg.sessionToken = sessionToken;
+    }
+    if (roomId) {
+      msg.roomId = roomId;
     }
     this.send(msg);
   }
@@ -189,6 +197,9 @@ export class NetworkClient {
         break;
       case ServerMsg.GAME_STATE:
         this.handlers.onGameState?.(msg);
+        break;
+      case ServerMsg.ROOM_LIST:
+        this.handlers.onRoomList?.(msg);
         break;
     }
   }
