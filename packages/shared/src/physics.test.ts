@@ -185,7 +185,7 @@ describe('energy', () => {
 
   it('does not go below 0', () => {
     const state = makeState({ energy: 50 });
-    updateEnergy(state, makeInput({ afterburner: true }), WARBIRD, 1.0);
+    updateEnergy(state, makeInput({ afterburner: true, thrust: true }), WARBIRD, 1.0);
     // 50 - 550 + 400 = -100 -> clamped to 0
     expect(state.energy).toBe(0);
   });
