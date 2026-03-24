@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Ship Physics and Arena** - Momentum-based ship movement and tile-based arena with wall collision, playable as a single-player physics sandbox (completed 2026-03-23)
 - [x] **Phase 2: Multiplayer Combat** - Authoritative server, client prediction, weapons, ship types, and real-time combat between multiple players (completed 2026-03-23)
-- [ ] **Phase 3: Game Experience** - Game modes, HUD, scoreboard, radar, audio, visual polish, chat, and ship selection flow
+- [x] **Phase 3: Game Experience** - Game modes, HUD, scoreboard, radar, audio, visual polish, chat, and ship selection flow (completed 2026-03-24)
 - [ ] **Phase 4: Production Launch** - Public hosting, performance at scale, and multi-arena support
 
 ## Phase Details
@@ -70,11 +70,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Shared game mode types, protocol extensions, FFA/TeamArena/spectator server implementation
-- [ ] 03-02-PLAN.md -- HUD (energy bar, K/D), kill feed, scoreboard overlays, bomb key remap
-- [ ] 03-03-PLAN.md -- Radar minimap (PixiJS) and text chat system with network relay
-- [ ] 03-04-PLAN.md -- Audio system (Howler.js), neon glow/bloom visual effects (pixi-filters)
-- [ ] 03-05-PLAN.md -- Integration wiring, game-over screen, audio triggers, and full verification
+- [x] 03-01-PLAN.md -- Shared game mode types, protocol extensions, FFA/TeamArena/spectator server implementation
+- [x] 03-02-PLAN.md -- HUD (energy bar, K/D), kill feed, scoreboard overlays, bomb key remap
+- [x] 03-03-PLAN.md -- Radar minimap (PixiJS) and text chat system with network relay
+- [x] 03-04-PLAN.md -- Audio system (Howler.js), neon glow/bloom visual effects (pixi-filters)
+- [x] 03-05-PLAN.md -- Integration wiring, game-over screen, audio triggers, and full verification
 
 ### Phase 4: Production Launch
 **Goal**: Anyone on the internet can open a URL and immediately start playing with no installation or account required
@@ -98,5 +98,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 7/7 | Complete   | 2026-03-23 |
-| 3. Game Experience | 3/5 | In Progress|  |
+| 3. Game Experience | 5/5 | Complete   | 2026-03-24 |
 | 4. Production Launch | 0/1 | Not started | - |
