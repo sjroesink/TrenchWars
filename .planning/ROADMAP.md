@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Ship Physics and Arena** - Momentum-based ship movement and tile-based arena with wall collision, playable as a single-player physics sandbox (completed 2026-03-23)
 - [x] **Phase 2: Multiplayer Combat** - Authoritative server, client prediction, weapons, ship types, and real-time combat between multiple players (completed 2026-03-23)
 - [x] **Phase 3: Game Experience** - Game modes, HUD, scoreboard, radar, audio, visual polish, chat, and ship selection flow (completed 2026-03-24)
-- [ ] **Phase 4: Production Launch** - Public hosting, performance at scale, and multi-arena support
+- [ ] **Phase 4: Production Launch** - Ship sprites, multi-arena rooms, performance at scale
 
 ## Phase Details
 
@@ -84,10 +84,12 @@ Plans:
   1. Game is accessible via a public URL in any modern browser with no installation or account creation
   2. Server maintains 60fps simulation with 20+ concurrent players without degradation
   3. Multiple arena rooms can run simultaneously, and players can choose which to join
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md -- Ship sprites replacing Graphics triangles with real SubSpace PNG sprites and rotation frame lookup
+- [ ] 04-02-PLAN.md -- Multi-room support with ArenaRoom abstraction, RoomManager, and room selection UI
+- [ ] 04-03-PLAN.md -- Performance optimization for 20+ players, room manager tests, full build verification
 
 ## Progress
 
@@ -99,4 +101,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 7/7 | Complete   | 2026-03-23 |
 | 3. Game Experience | 5/5 | Complete   | 2026-03-24 |
-| 4. Production Launch | 0/1 | Not started | - |
+| 4. Production Launch | 0/3 | Not started | - |
