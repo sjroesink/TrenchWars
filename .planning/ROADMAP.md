@@ -87,7 +87,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Ship sprites replacing Graphics triangles with real SubSpace PNG sprites and rotation frame lookup
+- [x] 04-01-PLAN.md -- Ship sprites replacing Graphics triangles with real SubSpace PNG sprites and rotation frame lookup
 - [ ] 04-02-PLAN.md -- Multi-room support with ArenaRoom abstraction, RoomManager, and room selection UI
 - [ ] 04-03-PLAN.md -- Performance optimization for 20+ players, room manager tests, full build verification
 
@@ -101,4 +101,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Ship Physics and Arena | 3/3 | Complete   | 2026-03-23 |
 | 2. Multiplayer Combat | 7/7 | Complete   | 2026-03-23 |
 | 3. Game Experience | 5/5 | Complete   | 2026-03-24 |
-| 4. Production Launch | 0/3 | Not started | - |
+| 4. Production Launch | 1/3 | In progress | - |
