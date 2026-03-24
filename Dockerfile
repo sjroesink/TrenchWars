@@ -10,7 +10,7 @@ COPY packages/shared/package.json packages/shared/
 COPY packages/client/package.json packages/client/
 COPY packages/server/package.json packages/server/
 
-RUN npm ci
+RUN npm ci --omit=optional
 
 COPY .git/ .git/
 COPY packages/shared/ packages/shared/
@@ -33,7 +33,7 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/server/package.json packages/server/
 
-RUN npm ci
+RUN npm ci --omit=optional
 
 # Install tsx globally for running TypeScript
 RUN npm install -g tsx
