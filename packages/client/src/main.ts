@@ -9,13 +9,15 @@ import { DebugPanel } from './debug';
 import { NetworkClient } from './network';
 import { PredictionManager } from './prediction';
 import { ShipSelectOverlay } from './ship-select';
+import { RoomSelect } from './ui/room-select';
 import { Chat } from './ui/chat';
 import { HUD } from './ui/hud';
 import { KillFeed } from './ui/kill-feed';
 import { Scoreboard } from './ui/scoreboard';
 import { GameOverScreen } from './ui/game-over';
 import { SoundManager } from './audio/sound-manager';
-import type { GameModeState, FFAState } from '@trench-wars/shared';
+import { ShipSpriteManager } from './sprites/ship-sprites';
+import type { GameModeState, FFAState, RoomInfo } from '@trench-wars/shared';
 
 /** Server WebSocket URL (configurable via query param or default) */
 function getServerUrl(): string {
@@ -41,6 +43,9 @@ async function main(): Promise<void> {
   const soundManager = new SoundManager();
   const gameOverScreen = new GameOverScreen();
 
+  // Room selection state (populated after connecting to server)
+  let selectedRoomId: string | undefined;
+
   // Show ship selection overlay before connecting
   // onInteraction initializes audio on first user gesture (browser autoplay policy)
   const shipSelectOverlay = new ShipSelectOverlay({
@@ -62,11 +67,16 @@ async function main(): Promise<void> {
   // Mutable config copy so debug panel can modify it
   const shipConfig: ShipConfig = { ...selectedConfig };
 
+  // Load ship sprites before renderer initialization
+  const shipSpriteManager = new ShipSpriteManager();
+  await shipSpriteManager.loadAll();
+
   // Initialize systems
   const inputManager = new InputManager();
   const camera = new Camera();
   const renderer = new Renderer();
-  await renderer.init(tileMap);
+  await renderer.init(tileMap, shipSpriteManager);
+  renderer.setShipType(selectedShipType);
 
   // UI overlays (created before network so handlers can reference them)
   const hud = new HUD();

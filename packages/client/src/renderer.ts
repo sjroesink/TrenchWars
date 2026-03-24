@@ -1,4 +1,4 @@
-import { Application, Graphics, Container } from 'pixi.js';
+import { Application, Graphics, Container, Sprite } from 'pixi.js';
 import { GlowFilter } from 'pixi-filters/glow';
 import { AdvancedBloomFilter } from 'pixi-filters/advanced-bloom';
 import type { ShipState, TileMap, GameSnapshot } from '@trench-wars/shared';
@@ -9,10 +9,11 @@ import { WeaponRenderer } from './weapon-renderer';
 import { RemotePlayerRenderer } from './remote-player';
 import { VisualEffects } from './visual-effects';
 import { Radar } from './ui/radar';
+import type { ShipSpriteManager } from './sprites/ship-sprites';
 
 export class Renderer {
   readonly app: Application;
-  private shipGraphics!: Graphics;
+  private shipSprite!: Sprite;
   private shipContainer!: Container;
   private wallGraphics!: Graphics;
   private tilemapContainer!: Container;
@@ -21,13 +22,16 @@ export class Renderer {
   private remotePlayerRenderer!: RemotePlayerRenderer;
   private visualEffects!: VisualEffects;
   private radar!: Radar;
+  private shipSpriteManager!: ShipSpriteManager;
+  private shipType = 0;
 
   constructor() {
     this.app = new Application();
   }
 
-  async init(map: TileMap): Promise<void> {
+  async init(map: TileMap, shipSpriteManager: ShipSpriteManager): Promise<void> {
     this.mapData = map;
+    this.shipSpriteManager = shipSpriteManager;
 
     await this.app.init({
       width: window.innerWidth,
@@ -47,7 +51,7 @@ export class Renderer {
     this.tilemapContainer.addChild(this.wallGraphics);
 
     // Remote players layer (behind projectiles and local ship)
-    this.remotePlayerRenderer = new RemotePlayerRenderer(this.app.stage);
+    this.remotePlayerRenderer = new RemotePlayerRenderer(this.app.stage, this.shipSpriteManager);
 
     // Apply glow filter to remote player container (red glow)
     const remoteGlow = new GlowFilter({
@@ -77,10 +81,10 @@ export class Renderer {
 
     // Ship sprite in its own container for glow filter
     this.shipContainer = new Container();
-    this.shipGraphics = new Graphics();
-    this.shipGraphics.poly([-8, -6, 12, 0, -8, 6]);
-    this.shipGraphics.fill({ color: 0x00ff88 });
-    this.shipContainer.addChild(this.shipGraphics);
+    this.shipSprite = new Sprite();
+    this.shipSprite.anchor.set(0.5, 0.5);
+    this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType, 0);
+    this.shipContainer.addChild(this.shipSprite);
     this.app.stage.addChild(this.shipContainer);
 
     // Apply glow filter to local ship container (green glow)
@@ -105,6 +109,11 @@ export class Renderer {
       quality: 4,
     });
     this.app.stage.filters = [bloom];
+  }
+
+  /** Set the local player's ship type for sprite lookup */
+  setShipType(type: number): void {
+    this.shipType = type;
   }
 
   /** Trigger an enhanced explosion effect at a world position */
@@ -191,6 +200,6 @@ export class Renderer {
     const shipScreen = camera.worldToScreen(state.x, state.y);
     this.shipContainer.x = shipScreen.x;
     this.shipContainer.y = shipScreen.y;
-    this.shipGraphics.rotation = state.orientation * Math.PI * 2;
+    this.shipSprite.texture = this.shipSpriteManager.getTexture(this.shipType, state.orientation);
   }
 }

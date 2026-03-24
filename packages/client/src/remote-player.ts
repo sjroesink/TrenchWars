@@ -1,23 +1,26 @@
-import { Graphics, Container } from 'pixi.js';
+import { Sprite, Container } from 'pixi.js';
 import type { InterpolatedEntity } from './interpolation';
 import type { Camera } from './camera';
+import type { ShipSpriteManager } from './sprites/ship-sprites';
 
 /**
- * Renders remote players' ships using pooled Graphics objects.
- * Enemy ships are drawn as red triangles (0xFF4444) to distinguish
- * from the local player's green ship.
+ * Renders remote players' ships using pooled Sprite objects.
+ * Each sprite's texture is set per-frame via ShipSpriteManager
+ * based on the entity's shipType and orientation.
  */
 export class RemotePlayerRenderer {
   readonly container: Container;
-  private pool: Graphics[] = [];
+  private pool: Sprite[] = [];
   private activeCount = 0;
+  private shipSpriteManager: ShipSpriteManager;
 
-  constructor(parent: Container) {
+  constructor(parent: Container, shipSpriteManager: ShipSpriteManager) {
     this.container = new Container();
+    this.shipSpriteManager = shipSpriteManager;
     parent.addChild(this.container);
   }
 
-  /** Render all remote players, pooling Graphics objects */
+  /** Render all remote players, pooling Sprite objects */
   render(
     remotePlayers: Map<string, InterpolatedEntity>,
     camera: Camera,
@@ -27,41 +30,39 @@ export class RemotePlayerRenderer {
     for (const [, entity] of remotePlayers) {
       if (!entity.alive) continue;
 
-      const gfx = this.getOrCreateGraphics(index);
+      const sprite = this.getOrCreateSprite(index);
       const screen = camera.worldToScreen(entity.x, entity.y);
 
-      gfx.x = screen.x;
-      gfx.y = screen.y;
-      gfx.rotation = entity.orientation * Math.PI * 2;
-      gfx.visible = true;
+      sprite.x = screen.x;
+      sprite.y = screen.y;
+      sprite.texture = this.shipSpriteManager.getTexture(entity.shipType, entity.orientation);
+      sprite.visible = true;
 
       index++;
     }
 
-    // Hide unused pooled graphics
+    // Hide unused pooled sprites
     this.activeCount = index;
     for (let i = index; i < this.pool.length; i++) {
       this.pool[i].visible = false;
     }
   }
 
-  private getOrCreateGraphics(index: number): Graphics {
+  private getOrCreateSprite(index: number): Sprite {
     if (index < this.pool.length) {
       return this.pool[index];
     }
 
-    // Create new ship graphic -- red enemy triangle (same shape as local ship)
-    const gfx = new Graphics();
-    gfx.poly([-8, -6, 12, 0, -8, 6]);
-    gfx.fill({ color: 0xff4444 });
-    this.container.addChild(gfx);
-    this.pool.push(gfx);
-    return gfx;
+    const sprite = new Sprite();
+    sprite.anchor.set(0.5, 0.5);
+    this.container.addChild(sprite);
+    this.pool.push(sprite);
+    return sprite;
   }
 
   destroy(): void {
-    for (const gfx of this.pool) {
-      gfx.destroy();
+    for (const sprite of this.pool) {
+      sprite.destroy();
     }
     this.pool.length = 0;
     this.container.destroy();
