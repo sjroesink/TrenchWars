@@ -28,12 +28,13 @@ function getServerUrls(): { ws: string; wt: string } {
   // Dev mode (Vite on 9010/9011): connect to separate server
   if (window.location.port === '9010' || window.location.port === '9011') {
     return {
-      ws: 'wss://127.0.0.1:9020',
-      wt: 'https://127.0.0.1:9020/game', // Same port — HTTP/3 on UDP, HTTPS on TCP
+      ws: 'wss://127.0.0.1:9020/game',
+      wt: 'https://127.0.0.1:9020/game',
     };
   }
-  // Production: WebSocket through Traefik, WebTransport direct (bypasses Cloudflare/Traefik)
-  const wsUrl = `wss://${window.location.host}`;
+  // Production: WebSocket on /game path, WebTransport direct (bypasses Cloudflare/Traefik)
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl = `${proto}://${window.location.host}/game`;
   const wtUrl = `https://wt.trenchwars.sander.ninja:4433/game`;
   return { ws: wsUrl, wt: wtUrl };
 }

@@ -7,7 +7,6 @@ services:
       - "9020:8080"           # HTTP (TCP) — Traefik proxies this
       - "4433:4433/udp"       # WebTransport (UDP) — direct
     environment:
-      - NODE_ENV=production
       - PORT=8080
       - WT_PORT=4433
       - STATIC_DIR=/app/public

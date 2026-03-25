@@ -6,3 +6,5 @@ packages/server/dist
 packages/shared/dist
 .vite
 deep-research-report.md
+packages/server-rs/target
+.claude
