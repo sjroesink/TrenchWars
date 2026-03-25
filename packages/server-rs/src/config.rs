@@ -84,7 +84,7 @@ pub fn warbird_weapons() -> WeaponConfig {
         bomb_speed: 0.0,
         bullet_fire_delay: 100.0 / 100.0,
         bomb_fire_delay: 0.0,
-        bullet_fire_energy: 450.0,
+        bullet_fire_energy: 1500.0,  // costs all energy
         bomb_fire_energy: 0.0,
         bomb_bounce_count: 0,
         bomb_thrust: 0.0,
@@ -161,7 +161,7 @@ pub const BULLET_ALIVE_TICKS: u32 = 800;
 pub const BOMB_ALIVE_TICKS: u32 = 12000;
 pub const BOMB_EXPLODE_RADIUS: f32 = 150.0 / 16.0;
 pub const BOMB_DAMAGE_LEVEL: f32 = 2650.0;
-pub const BULLET_DAMAGE_LEVEL: f32 = 520.0;
+pub const BULLET_DAMAGE_LEVEL: f32 = 2000.0;  // one-shot kill
 pub const ENTER_DELAY: u32 = 100;
 pub const RECONNECT_TIMEOUT: u32 = 3000;
 pub const PROJECTILE_RADIUS: f32 = 0.1;

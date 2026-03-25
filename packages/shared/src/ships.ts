@@ -109,7 +109,7 @@ export const WARBIRD_WEAPONS: WeaponConfig = {
   bombSpeed: 0,                     // Warbird: no bomb
   bulletFireDelay: 100 / 100,       // 1.00 seconds
   bombFireDelay: 0,
-  bulletFireEnergy: 450,
+  bulletFireEnergy: 1500,            // costs all energy (one-shot)
   bombFireEnergy: 0,
   bombBounceCount: 0,
   bombThrust: 0,

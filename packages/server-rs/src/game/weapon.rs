@@ -278,11 +278,17 @@ impl WeaponManager {
             }
         }
 
-        // Remove in reverse order
-        to_remove.sort_unstable_by(|a, b| b.cmp(a));
-        for idx in to_remove {
-            self.projectiles.swap_remove(idx);
+        // Remove projectiles by marking indices, then retain non-removed
+        let mut remove_set = vec![false; self.projectiles.len()];
+        for idx in &to_remove {
+            remove_set[*idx] = true;
         }
+        let mut i = 0;
+        self.projectiles.retain(|_| {
+            let keep = !remove_set[i];
+            i += 1;
+            keep
+        });
 
         (kills, damages)
     }

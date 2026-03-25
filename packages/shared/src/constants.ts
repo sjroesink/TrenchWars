@@ -5,7 +5,7 @@ export const MAP_SIZE = 1024;       // tiles per side (1024x1024)
 export const DEFAULT_BOUNCE_FACTOR = 0.65; // SVS formula: 16/BounceFactor. TW zones typically ~0.6-0.7
 
 // Weapon constants (TW competitive settings)
-export const BULLET_DAMAGE_LEVEL = 520;     // base bullet damage
+export const BULLET_DAMAGE_LEVEL = 2000;    // one-shot kill
 export const BOMB_DAMAGE_LEVEL = 2650;      // bomb direct damage at center
 export const BULLET_DAMAGE_UPGRADE = 520;   // per-level damage increase
 export const BULLET_ALIVE_TIME = 800;       // ticks (8.0 seconds at 100Hz)
