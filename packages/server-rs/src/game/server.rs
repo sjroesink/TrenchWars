@@ -132,6 +132,13 @@ async fn handle_connection(
                         let mut state = rooms[room_idx].lock().await;
                         state.clients.remove(pid.as_str());
 
+                        // Get player name before removing
+                        let player_name = state
+                            .player_manager
+                            .get_player(pid.as_str())
+                            .map(|p| p.name.clone())
+                            .unwrap_or_default();
+
                         // Broadcast player leave
                         let msg = server_msg(
                             ServerMsg::PlayerLeave,
@@ -139,10 +146,22 @@ async fn handle_connection(
                         );
                         state.broadcast(&msg);
 
-                        // Notify game mode and hold player for reconnection
+                        // Announce departure
+                        let announce = server_msg(
+                            ServerMsg::Chat,
+                            serde_json::json!({
+                                "playerId": "",
+                                "name": "",
+                                "message": format!("{} left the arena", player_name),
+                            }),
+                        );
+                        state.broadcast(&announce);
+
+                        // Remove player immediately
                         state.game_mode.on_player_leave(pid.as_str());
-                        let tick = state.tick_count;
-                        state.player_manager.hold_player(pid.as_str(), tick);
+                        state.player_manager.remove_player(pid.as_str());
+                        state.weapon_manager.remove_player(pid.as_str());
+                        state.input_queues.remove(pid.as_str());
                     }
                 }
                 return;
@@ -240,6 +259,17 @@ async fn handle_reliable(
                     }),
                 );
                 state.broadcast(&join_msg);
+
+                // Announce arrival
+                let announce = server_msg(
+                    ServerMsg::Chat,
+                    serde_json::json!({
+                        "playerId": "",
+                        "name": "",
+                        "message": format!("{} entered the arena", name),
+                    }),
+                );
+                state.broadcast(&announce);
 
                 drop(state);
                 player_room_map.lock().await.insert(pid.clone(), room_idx);

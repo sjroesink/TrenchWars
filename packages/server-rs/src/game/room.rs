@@ -19,7 +19,7 @@ use crate::game_modes::ffa::FFAMode;
 
 /// Queued input from a client.
 #[derive(Debug)]
-struct QueuedInput {
+pub(crate) struct QueuedInput {
     seq: u32,
     input: ShipInput,
     fire: bool,

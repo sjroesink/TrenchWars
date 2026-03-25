@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::f32::consts::TAU;
 
+use tracing::debug;
+
 use crate::config::{self, WeaponConfig};
 use super::map::TileMap;
 use super::physics::ShipState;
@@ -79,6 +81,8 @@ impl WeaponManager {
         let angle = ship.orientation * TAU;
         let hx = angle.cos();
         let hy = angle.sin();
+
+        debug!("FIRE bullet {} by {} energy_left={:.0} pos=({:.1},{:.1})", id, &owner_id[..8], ship.energy, ship.x, ship.y);
 
         self.projectiles.push(Projectile {
             id,
@@ -248,11 +252,14 @@ impl WeaponManager {
             // Hit detection against alive players
             let mut hit = false;
             for (pid, px, py, pr) in alive_players {
-                if pid == &proj.owner_id { continue; }
+                if *pid == proj.owner_id { continue; }
 
                 let dx = (proj.x - px).abs();
                 let dy = (proj.y - py).abs();
-                if dx < (config::PROJECTILE_RADIUS + pr) && dy < (config::PROJECTILE_RADIUS + pr) {
+                let hit_dist = config::PROJECTILE_RADIUS + pr;
+                if dx < hit_dist && dy < hit_dist {
+                    debug!("HIT! proj {} ({:.1},{:.1}) -> player {} ({:.1},{:.1}) dx={:.2} dy={:.2} hitdist={:.2}",
+                        proj.id, proj.x, proj.y, &pid[..8], px, py, dx, dy, hit_dist);
                     if proj.is_bomb {
                         let damage = calculate_bomb_damage(0.0, proj.level);
                         damages.push(DamageEvent {
