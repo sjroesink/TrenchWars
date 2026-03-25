@@ -7,6 +7,7 @@ import type { TransportAdapter } from './transport-adapter';
 export class WtAdapter implements TransportAdapter {
   private transport: WebTransport | null = null;
   private reliableWriter: WritableStreamDefaultWriter<Uint8Array> | null = null;
+  private datagramWriter: WritableStreamDefaultWriter<Uint8Array> | null = null;
   private closed = false;
   private messageHandler: ((data: string) => void) | null = null;
   private datagramHandler: ((data: Uint8Array) => void) | null = null;
@@ -116,8 +117,10 @@ export class WtAdapter implements TransportAdapter {
 
   sendUnreliable(data: Uint8Array): void {
     if (this.closed || !this.transport) return;
-    const writer = this.transport.datagrams.writable.getWriter();
-    writer.write(data).catch(() => {}).finally(() => writer.releaseLock());
+    if (!this.datagramWriter) {
+      this.datagramWriter = this.transport.datagrams.writable.getWriter();
+    }
+    this.datagramWriter.write(data).catch(() => {});
   }
 
   onMessage(handler: (data: string) => void): void {
