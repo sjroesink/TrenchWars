@@ -35,7 +35,7 @@ function getServerUrls(): { ws: string; wt: string } {
   // Production: WebSocket on /game path, WebTransport direct (bypasses Cloudflare/Traefik)
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${proto}://${window.location.host}/game`;
-  const wtUrl = `https://wt.trenchwars.sander.ninja:4433/game`;
+  const wtUrl = `https://wt.trenchwars.roesink.dev:4433/game`;
   return { ws: wsUrl, wt: wtUrl };
 }
 

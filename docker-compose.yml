@@ -29,14 +29,14 @@ services:
       sh -c "certbot certonly
         --dns-cloudflare
         --dns-cloudflare-credentials /cloudflare.ini
-        -d wt.trenchwars.sander.ninja
+        -d wt.trenchwars.roesink.dev
         --non-interactive --agree-tos
         --email sander@roesink.dev
-      && cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/fullchain.pem /etc/letsencrypt/cert.pem
-      && cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/privkey.pem /etc/letsencrypt/key.pem
+      && cp /etc/letsencrypt/live/wt.trenchwars.roesink.dev/fullchain.pem /etc/letsencrypt/cert.pem
+      && cp /etc/letsencrypt/live/wt.trenchwars.roesink.dev/privkey.pem /etc/letsencrypt/key.pem
       && while :; do
         certbot renew --quiet;
-        cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/fullchain.pem /etc/letsencrypt/cert.pem;
-        cp /etc/letsencrypt/live/wt.trenchwars.sander.ninja/privkey.pem /etc/letsencrypt/key.pem;
+        cp /etc/letsencrypt/live/wt.trenchwars.roesink.dev/fullchain.pem /etc/letsencrypt/cert.pem;
+        cp /etc/letsencrypt/live/wt.trenchwars.roesink.dev/privkey.pem /etc/letsencrypt/key.pem;
         sleep 12h;
       done"
