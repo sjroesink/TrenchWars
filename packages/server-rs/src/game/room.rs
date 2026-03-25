@@ -80,10 +80,11 @@ pub fn create_room(id: &str, name: &str, map: TileMap, max_players: usize) -> Sh
 /// Start the 100Hz game loop for a room.
 pub fn start_game_loop(room: SharedRoom) {
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
+        let mut interval = tokio::time::interval(std::time::Duration::from_millis(10));
         let mut last_time = Instant::now();
         let mut accumulator: f64 = 0.0;
         let ns_per_tick: f64 = 1_000_000_000.0 / config::TICK_RATE as f64;
+        let max_ticks_per_frame: u32 = 5; // prevent spiral of death
 
         loop {
             interval.tick().await;
@@ -93,10 +94,19 @@ pub fn start_game_loop(room: SharedRoom) {
             last_time = now;
             accumulator += elapsed_ns;
 
-            while accumulator >= ns_per_tick {
+            // Lock once, run all accumulated ticks, then release
+            if accumulator >= ns_per_tick {
                 let mut state = room.lock().await;
-                game_tick(&mut state);
-                accumulator -= ns_per_tick;
+                let mut ticks_this_frame = 0;
+                while accumulator >= ns_per_tick && ticks_this_frame < max_ticks_per_frame {
+                    game_tick(&mut state);
+                    accumulator -= ns_per_tick;
+                    ticks_this_frame += 1;
+                }
+                // Drop excess accumulator to prevent spiral of death
+                if accumulator > ns_per_tick * 2.0 {
+                    accumulator = 0.0;
+                }
             }
         }
     });
